@@ -10,4 +10,4 @@ publish = false
 proc-macro = true
 
 [dependencies]
-fracints_internals = { path = "../fracints_internals" }
+fracints_internals = {  version = "0.1.0", path = "../fracints_internals" }

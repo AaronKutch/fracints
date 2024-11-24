@@ -12,11 +12,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::constants::*;
 
-use crate::fracintParseError;
+use fracints_internals::FracintSerdeError;
 
 use core::result::Result;
+use fracints_internals::impl_signed;
 
-macro_rules! impl_fiN_1 {
+macro_rules! impl_signed1 {
     (
         $ty:ident,
         $s:expr,
@@ -44,7 +45,7 @@ macro_rules! impl_fiN_1 {
     };
 }
 
-impl_fiN_1!(
+impl_signed1!(
     fi8,
     "fi8",
     i8,
@@ -55,7 +56,7 @@ impl_fiN_1!(
     fi8_ok,
     CONST8
 );
-
+/*
 impl_fiN_2!(fi8, fi16, i8, u8, i16, u16, 7, 8, CONST8, CONST16);
 
 impl_fiN_1!(
@@ -98,8 +99,10 @@ impl_fiN_1!(
     CONST64
 );
 
-impl_fiN_2!(fi64, fi128, i64, u64, i128, u128, 63, 64, CONST64, CONST128);
+impl_fiN_2!(fi64, fi128, i64, u64, i128, u128, 63, 64, CONST64, CONST128);*/
 
+// TODO there is a mul and div routine from `awint_internals`
+/*
 impl_fiN_0!(
     fi128,
     "fi128",
@@ -129,3 +132,4 @@ impl_fiN_0!(
     fi128_ok,
     CONST128
 );
+*/

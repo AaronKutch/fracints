@@ -62,8 +62,7 @@ We need a full_mul free function into some kind of u256 for fi128 energies
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod constants;
-mod errors;
 mod impl_signed;
 
-pub use crate::errors::FracintParseError;
 pub use crate::impl_signed::*;
+pub use fracints_macros::*;

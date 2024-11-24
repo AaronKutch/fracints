@@ -66,7 +66,7 @@ macro_rules! impl_signed {
             /// non-fraction representation.
             ///
             /// See the [FracintParseError] documentation for parsing errors and examples.
-            pub fn from_str_radix(src: &str, radix: u32) -> Result<Self, FracintParseError> {
+            pub fn from_str_radix(src: &str, radix: u8) -> Result<Self, FracintParseError> {
                 use FracintParseError::*;
                 if radix < 2 || radix > 36 {
                     return Err(RadixOutOfRange);
