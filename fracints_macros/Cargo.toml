@@ -1,0 +1,14 @@
+[package]
+name = "fracints_macros"
+version = "0.1.0"
+authors = ["Aaron Kutch <aaronkutch@att.net>"]
+description = "accompanying proc-macro library to `fracints`"
+edition = "2021"
+publish = false
+
+[lib]
+proc-macro = true
+
+[dependencies]
+# TODO use a specialized optimized version of the parser, fuzz against `awint`
+#fracints_core = { path = "../fracints_core" }

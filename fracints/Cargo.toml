@@ -1,0 +1,22 @@
+[package]
+name = "fracints"
+version = "0.1.0"
+authors = ["Aaron Kutch <aaronkutch@att.net>"]
+description = "Special case fractional-only fixed point numbers"
+readme = "README.md"
+keywords = ["numerics","math"]
+categories = ["data-structures","algorithms"]
+#license = "MIT OR Apache-2.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+rand = { version = "0.8", optional = true }
+serde = { version = "1", optional = true }
+
+[features]
+default = ["std"]
+std = []
+
+[dev-dependencies]
+image = "0.25"
