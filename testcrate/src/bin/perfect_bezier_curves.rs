@@ -1,4 +1,3 @@
-
 //! Usually, we want to use the numerically stable De Casteljau's algorithm when computing bezier
 //! curves, but if computations are exact, then we can directly evaluate them. This example
 //! generates `output.png` which shows a grey cubic bezier curve generated without exact computation
@@ -6,9 +5,9 @@
 
 #![feature(proc_macro_hygiene)]
 
+use image::{ImageBuffer, Rgb, RgbImage};
 use normints::*;
 use normints_macros::*;
-use image::{Rgb, RgbImage, ImageBuffer};
 
 fn cubic_bezerp(b: &[fi8], t: fi8) -> fi8 {
     let c0 = (fi8::ONE - t) * (fi8::ONE - t) * (fi8::ONE - t);
@@ -48,10 +47,7 @@ fn main() {
         // the y coordinate is negated and 1. is added to correct the image
         let coordx = (cubic_bezerp(&bx, fi8(t)) + fi8!(1.)).0 as u8;
         let coordy = ((-cubic_bezerp(&by, fi8(t))) + fi8!(1.)).0 as u8;
-        img.put_pixel(
-            coordx as u32,
-            coordy as u32,
-            Rgb([128, 128, 128]));
+        img.put_pixel(coordx as u32, coordy as u32, Rgb([128, 128, 128]));
     }
 
     // draw the rounded exact bezier curve
@@ -65,7 +61,8 @@ fn main() {
         img.put_pixel(
             coordx as u32,
             coordy as u32,
-            Rgb([r.0 as u8, g.0 as u8, b.0 as u8]));
+            Rgb([r.0 as u8, g.0 as u8, b.0 as u8]),
+        );
     }
 
     img.save("perfect_bezier_curves.png").unwrap();

@@ -16,7 +16,7 @@ use std::str::FromStr;
 use rand::Rng;
 
 #[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use apint::*;
 

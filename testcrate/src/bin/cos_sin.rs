@@ -1,10 +1,10 @@
 #![feature(proc_macro_hygiene)]
 
-#[allow(unused_imports)]
-use std::{i8, i16};
+use image::{ImageBuffer, Rgb, RgbImage};
 use normints::*;
 use normints_macros::*;
-use image::{Rgb, RgbImage, ImageBuffer};
+#[allow(unused_imports)]
+use std::{i16, i8};
 
 fn hilbert_3d(t: u32) -> (u8, u8, u8) {
     // basis vectors relative to the absolute base vector
@@ -33,7 +33,9 @@ fn hilbert_3d(t: u32) -> (u8, u8, u8) {
         o[1] += dy << lvl;
         o[2] += dz << lvl;
 
-        if lvl == 0 {break}
+        if lvl == 0 {
+            break;
+        }
         lvl -= 1;
     }
     (o[0], o[1], o[2])
@@ -71,7 +73,8 @@ fn main() {
         img.put_pixel(
             x.wrapping_sub(fi8::MIN).0 as u8 as u32,
             y.saturating_neg().wrapping_sub(fi8::MIN).0 as u8 as u32,
-            Rgb([r, g, b]));
+            Rgb([r, g, b]),
+        );
     }
 
     for t in i16::MIN..=i16::MAX {
@@ -84,9 +87,9 @@ fn main() {
         img.put_pixel(
             x.wrapping_sub(fi8::MIN).0 as u8 as u32,
             y.saturating_neg().wrapping_sub(fi8::MIN).0 as u8 as u32,
-            Rgb([r, g, b]));
+            Rgb([r, g, b]),
+        );
     }
-
 
     img.save("cos_sin.png").unwrap();
 }

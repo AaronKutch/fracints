@@ -9,7 +9,7 @@
 
 use normints::*;
 use std::str::FromStr;
-use std::{i8, i16, i32, i64, i128};
+use std::{i128, i16, i32, i64, i8};
 
 // N.B.: Some constants rely on other constants. Copy the output into `constants.rs` and repeat
 // until the constants no longer change.

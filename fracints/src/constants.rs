@@ -1,5 +1,5 @@
 /// The generating function is in `main.rs`.
-use crate::fiN::*;
+use crate::impl_signed::*;
 
 pub struct Const8 {
     pub num_4divtau: fi8,

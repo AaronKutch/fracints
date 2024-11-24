@@ -67,7 +67,7 @@ macro_rules! impl_fiN_0 {
             /// ```
             /// use normints::fi16;
             /// assert_eq!(fi16::from_str_radix(&"-1.0",10).unwrap(),fi16::NEG_ONE);
-            /// 
+            ///
             /// assert_eq!(fi16::from_str_radix(&"0.123456789",10).unwrap(),fi16(4045));
             /// assert_eq!(fi16(4045).to_string(), "0.12344".to_string());
             /// ```
@@ -138,8 +138,11 @@ macro_rules! impl_fiN_0 {
                 // This is set such that the radix multiplied by itself `chars` times cannot
                 // overflow.
                 let bitwidth = BitWidth::new(
-                    (1usize << (32 - radix.leading_zeros())).wrapping_mul(len).wrapping_add($ushift)
-                ).unwrap();
+                    (1usize << (32 - radix.leading_zeros()))
+                        .wrapping_mul(len)
+                        .wrapping_add($ushift),
+                )
+                .unwrap();
                 let radix2 = ApInt::from_u32(radix).into_zero_resize(bitwidth);
                 let mut tmp = ApInt::zero(bitwidth);
                 let mut mul = ApInt::one(bitwidth);
@@ -191,14 +194,14 @@ macro_rules! impl_fiN_0 {
 
             /// Converts the fiN to a string representation in base `radix`, with a numerical error
             /// of <= 0.5 ULP.
-            /// 
+            ///
             /// There are some special cases:
             ///  - `fiN::ONE` => "1." (the decimal point here is a reminder that 1 cannot be
             ///    exactly represented in fiN)
             ///  - `fiN::NEG_ONE` | `fiN::MIN` => "-1." (to prevent `fiN::MIN` propagation)
             ///  - `fiN::ZERO` => "0." (the decimal point here is to correspond with
             ///    `from_str_radix`)
-            /// 
+            ///
             /// To know the max number of digits displayed, consider what happens when fi32(0) is
             /// incremented internally to fi32(1). The value it represents will go from 0 to
             /// ~0.0000000004657, or a difference of ~4.657*10^-10. These smallest increments (ULPs)
@@ -250,7 +253,6 @@ macro_rules! impl_fiN_0 {
                 // Suppose that `$iX::MAX + 1` was not a power of 2, but rather 10. This edge case
                 // can be seen in `1 / 1000 = 0.001` (4 digits in "1000", but 3 digits in "001").
 
-
                 // TODO: this can be put into a set of constants
                 let str_len = {
                     // for being able to divide $iX::MAX + 1
@@ -262,18 +264,19 @@ macro_rules! impl_fiN_0 {
                     loop {
                         val.wrapping_udiv_assign(&radix2).unwrap();
                         len += 1;
-                        if val.is_zero() {break len}
+                        if val.is_zero() {
+                            break len;
+                        }
                     }
                 };
                 let factor_num = match radix {
-                    2 | 4 | 8 | 16 | 32 => {
-                        str_len - 2
-                    }
-                    _ => str_len - 1
+                    2 | 4 | 8 | 16 | 32 => str_len - 2,
+                    _ => str_len - 1,
                 };
                 let bitwidth = BitWidth::new(
-                    (1usize << (32 - radix.leading_zeros())).wrapping_mul(factor_num + 2)
-                ).unwrap();
+                    (1usize << (32 - radix.leading_zeros())).wrapping_mul(factor_num + 2),
+                )
+                .unwrap();
 
                 // For example, fi8(16) will result in `(16 * 1000) / 128 = 125` which results in
                 // "0.125". TODO: store a 1000 / 128 constant in fixed point
@@ -298,7 +301,7 @@ macro_rules! impl_fiN_0 {
                     val.wrapping_inc();
                 }
                 // `val` is now the `125`
-                
+
                 // Using a brute force mechanism for simplicity.
                 // what will happen is that the `mul` 100 is compared to `val` 125, and found to
                 // be less than or equal to. `mul` is subtracted from `val` to make 25 and `ascii`
@@ -529,14 +532,13 @@ macro_rules! impl_fiN_0 {
                 // overflow, and $ty::MIN.wrapping_add($ty::ZERO) and
                 // $ty::ZERO.wrapping_add($ty::MIN) both overflow which means that
                 // `other <= $ty::ZERO` catches all the cases
-                self.checked_add(other)
-                    .unwrap_or_else(|| {
-                        if other <= $ty::ZERO {
-                            $ty::NEG_ONE
-                        } else {
-                            $ty::ONE
-                        }
-                    })
+                self.checked_add(other).unwrap_or_else(|| {
+                    if other <= $ty::ZERO {
+                        $ty::NEG_ONE
+                    } else {
+                        $ty::ONE
+                    }
+                })
             }
 
             /// Wrapping (modular) subtraction.
@@ -669,7 +671,7 @@ macro_rules! impl_fiN_0 {
 
             /// Saturating normint division. Saturates at the numeric bounds `fiN::NEG_ONE` and
             /// `fiN::ONE` instead of overflowing.
-            /// 
+            ///
             /// Panics are prevented and saturation handled in this way:
             ///     *if `other == fiN::ZERO`, `self.signum()` is returned
             ///     *else if `self.saturating_abs() >= other.saturating_abs()`, it will return
@@ -735,7 +737,7 @@ macro_rules! impl_fiN_0 {
 
             /// Saturating remainder. Saturates at the numeric bounds `fiN::NEG_ONE` and `fiN::ONE`
             /// instead of overflowing.
-            /// 
+            ///
             /// Panics are prevented and saturation handled in this way:
             ///     *if `other == fiN::ZERO`, `fiN::ZERO` is returned
             /// The current implementation is not final. (see issue TODO)
@@ -884,31 +886,19 @@ macro_rules! impl_fiN_0 {
                 match ((o & (1 << ($ishift - 1))) != 0, (o & (1 << $ishift)) != 0) {
                     (false, false) => {
                         let t = self * 2;
-                        (
-                            t.cos_taudiv4_taylor_base(),
-                            t.sin_taudiv4_taylor_base()
-                        )
-                    },
+                        (t.cos_taudiv4_taylor_base(), t.sin_taudiv4_taylor_base())
+                    }
                     (true, false) => {
                         let t = self.wrapping_sub($ty::MIN / -2) * 2;
-                        (
-                            -t.sin_taudiv4_taylor_base(),
-                            t.cos_taudiv4_taylor_base()
-                        )
+                        (-t.sin_taudiv4_taylor_base(), t.cos_taudiv4_taylor_base())
                     }
                     (false, true) => {
                         let t = self.wrapping_add($ty::MIN) * 2;
-                        (
-                            -t.cos_taudiv4_taylor_base(),
-                            -t.sin_taudiv4_taylor_base()
-                        )
+                        (-t.cos_taudiv4_taylor_base(), -t.sin_taudiv4_taylor_base())
                     }
                     (true, true) => {
                         let t = self.wrapping_add($ty::MIN / -2) * 2;
-                        (
-                            t.sin_taudiv4_taylor_base(),
-                            -t.cos_taudiv4_taylor_base()
-                        )
+                        (t.sin_taudiv4_taylor_base(), -t.cos_taudiv4_taylor_base())
                     }
                 }
             }
@@ -961,19 +951,17 @@ macro_rules! impl_fiN_0 {
             }
         }
 
-        /// uses self.to_string_radix(10)
-        #[cfg(feature = "std")]
         impl fmt::Display for $ty {
+            /// Uses `self.to_string_radix(10)`.
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 write!(f, "{}", self.to_string_radix(10))
             }
         }
 
-        /// uses Self::from_str_radix(s, 10)
-        #[cfg(feature = "std")]
         impl FromStr for $ty {
             type Err = NormintParseError;
 
+            /// Uses `Self::from_str_radix(s, 10)`.
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 Self::from_str_radix(s, 10)
             }
@@ -1340,10 +1328,7 @@ macro_rules! impl_fiN_0 {
                 $ty::from_str_radix("0.5", 10).unwrap(),
                 $ty($iX::MAX / 2 + 1)
             );
-            assert_eq!(
-                $ty::from_str_radix("-0.5", 10).unwrap(),
-                $ty($iX::MIN / 2)
-            );
+            assert_eq!($ty::from_str_radix("-0.5", 10).unwrap(), $ty($iX::MIN / 2));
             // should work in all availiable bases
             // TODO there is early returns in the functions for these meaning I need to write some
             // more

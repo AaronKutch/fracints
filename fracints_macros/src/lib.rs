@@ -5,7 +5,7 @@ use proc_macro::TokenStream;
 
 macro_rules! impl_normint_macros {
     ($($ty:ident),*) => {$(
-        /// Literal conversion into the type. 
+        /// Literal conversion into the type.
         ///
         /// See `fiN::from_str_radix` for definition, and `NormintParseError` for more error
         /// information.

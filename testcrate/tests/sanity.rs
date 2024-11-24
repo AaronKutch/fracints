@@ -1,4 +1,3 @@
-
 #[test]
 fn general_sanity_test() {
     //It is very important to know the exact behavior of casting and shifts. The following is to have as reference every time `as` casting or shifting is used.

@@ -1,11 +1,11 @@
 #![feature(proc_macro_hygiene)]
 
+use apint::*;
+use image::{ImageBuffer, Rgb, RgbImage};
 use normints::*;
 use normints_macros::*;
-use apint::*;
-use image::{Rgb, RgbImage, ImageBuffer};
-use std::u16;
 use std::iter;
+use std::u16;
 
 /*
 fn hilbert_2d(t: u16) -> (u8, u8) {
@@ -173,7 +173,6 @@ fn main() {
     o
 }*/
 
-
 fn hilbert_3d(t: u32) -> (u8, u8, u8) {
     // basis vectors relative to the absolute base vector
     // the axis
@@ -195,13 +194,17 @@ fn hilbert_3d(t: u32) -> (u8, u8, u8) {
         let dx = ((d >> a[0]) & 1) ^ (s[0] as u8);
         let dy = ((d >> a[1]) & 1) ^ (s[1] as u8);
         let dz = ((d >> a[2]) & 1) ^ (s[2] as u8);
-if t == 200 {dbg!((t, &a, &s, &o, dx, dy, dz));}
+        if t == 200 {
+            dbg!((t, &a, &s, &o, dx, dy, dz));
+        }
         // add to output
         o[0] += dx << lvl;
         o[1] += dy << lvl;
         o[2] += dz << lvl;
 
-        if lvl == 0 {break}
+        if lvl == 0 {
+            break;
+        }
         lvl -= 1;
 
         // find and swap two axis
@@ -216,7 +219,7 @@ if t == 200 {dbg!((t, &a, &s, &o, dx, dy, dz));}
                             let tmp = s[i0];
                             s[i0] = s[i1];
                             s[i1] = tmp;
-                            return
+                            return;
                         }
                     }
                 }
@@ -260,9 +263,9 @@ if t == 200 {dbg!((t, &a, &s, &o, dx, dy, dz));}
             }
             7 => {
                 fs(&mut a, &mut s, 0, 2);
-                n(&mut a, &mut s,0,2);
+                n(&mut a, &mut s, 0, 2);
             }
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
     (o[0], o[1], o[2])

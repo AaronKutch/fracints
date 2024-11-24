@@ -3,9 +3,9 @@
 use normints::*;
 use normints_macros::*;
 use specialized_div_rem::i128_div_rem;
+use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt::Display;
-use std::convert::TryFrom;
 
 // Use front-to-back rendering and a depth buffer for the best transparency results
 // Check if large swaths have no transparency left
@@ -37,7 +37,7 @@ type Vec3 = (fi64, fi64, fi64);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Cam {
-    /// Position of the center of the projection plane of the camera. The 
+    /// Position of the center of the projection plane of the camera. The
     pos: Vec3,
     // Rotation rotor for the camera.
     // The geometric product of two normalized vectors `a_hat` and `b_hat` in three dimensions
@@ -47,7 +47,7 @@ pub struct Cam {
     // + (a_x*b_y - a_y*b_x)*(x_hat ∧ y_hat)
     // + (a_y*b_z - a_z*b_y)*(y_hat ∧ z_hat)
     // + (a_z*b_x - a_x*b_z)*(z_hat ∧ x_hat).
-    // 
+    //
     // Because three dimensions is a special case where the exterior products can correspond to
     // a unique vector tangent to the bivector, we can alternatively use a rotation of angle
     // `theta` around an axis `a_hat`:
@@ -57,7 +57,7 @@ pub struct Cam {
     // + a_z*sin(theta / 2),
     // but this requires deciding handedness, if `z_hat ∧ x_hat = y_hat` or if
     // `x_hat ∧ z_hat = y_hat`.
-    // 
+    //
     // To make this more general, we use the geometric product expansion instead and expose three
     // functions, each with `a_hat` set to a different absolute basis vector, and allow the user to
     // put in an arbitrary `b_hat`. The only hard coded assumptions are that the default camera
@@ -65,7 +65,6 @@ pub struct Cam {
     // the y axis to the right, and the z axis is up (reflections are applied to `rot_mat` to make
     // the output image right side up, due to the y-axis being down in typical image formats).
     //rot: Vec4,
-
     /// Projection matrix used for the direction of the camera.
     /// `proj_mat.0` is the vector perpendicular to the projection plane. It starts at the origin
     /// of the projection rectangle and indicates the direction of the camera.
@@ -110,31 +109,33 @@ impl Cam {
         near_cutoff: fi64,
         proj_rect_size: Vec2,
         proj_rect_origin: Vec2,
-        proj_rect_points: (u16,u16),
+        proj_rect_points: (u16, u16),
     ) -> Result<Self, CamError> {
         // for completeness
-        let buf_len = match usize::try_from((proj_rect_points.0 as u32) * (proj_rect_points.1 as u32)) {
-            Ok(x) => x,
-            Err(_) => return Err(CamError::BufferOverflow)
-        };
+        let buf_len =
+            match usize::try_from((proj_rect_points.0 as u32) * (proj_rect_points.1 as u32)) {
+                Ok(x) => x,
+                Err(_) => return Err(CamError::BufferOverflow),
+            };
         if focal_len == fi64::ZERO {
-            return Err(CamError::DegenerateProjection)
+            return Err(CamError::DegenerateProjection);
         }
         if near_cutoff.is_negative()
             || proj_rect_size.0.is_negative()
             || proj_rect_size.1.is_negative()
-            || focal_len.is_negative() {
-            return Err(CamError::NegativeDimensions)
+            || focal_len.is_negative()
+        {
+            return Err(CamError::NegativeDimensions);
         }
         let proj_rect_max = (
             match proj_rect_origin.0.checked_add(proj_rect_size.0) {
                 Some(x) => x,
-                None => return Err(CamError::ProjectionPlaneOverflow)
+                None => return Err(CamError::ProjectionPlaneOverflow),
             },
             match proj_rect_origin.1.checked_add(proj_rect_size.1) {
                 Some(x) => x,
-                None => return Err(CamError::ProjectionPlaneOverflow)
-            }
+                None => return Err(CamError::ProjectionPlaneOverflow),
+            },
         );
         Ok(Cam {
             pos,
@@ -146,7 +147,7 @@ impl Cam {
             proj_rect_min: proj_rect_origin,
             proj_rect_max,
             proj_rect_points,
-            buf_len
+            buf_len,
         })
     }
 
@@ -205,7 +206,7 @@ impl Cam {
         //update matrix
         self.matrix = calc_rot_matrix(self.rotation);
     }*/
-/*
+    /*
     //moves and rotates a point according to the camera's position and rotation, returning the point as it appears relative to the camera if the entire world was moved if the camera where placed at the origin and the entire world is rotated so that the camera points down the z- axis with the x+ axis to its right and y- axis is up
     //note: if the point is more than fi32::MAX away from the camera, overflows will happen
     pub fn mov_rot(&self, p: Vec3) -> Vec3 {
@@ -253,7 +254,7 @@ impl Cam {
             )
         );
     }*/
-/*
+    /*
     pub fn rot(&self, p: (fi32, fi32, fi32)) -> (fi32, fi32, fi32) {
         (
             ((matrix.0).0 * p.0) + ((matrix.0).1 * p.1) + ((matrix.0).2 * p.2),
@@ -269,35 +270,35 @@ impl Cam {
 
         // find the distance perpendicular to the projection plane
         let comp_x =
-            (p.0 * (self.proj_mat.0).0)
-            + (p.1 * (self.proj_mat.0).1)
-            + (p.2 * (self.proj_mat.0).2);
+            (p.0 * (self.proj_mat.0).0) + (p.1 * (self.proj_mat.0).1) + (p.2 * (self.proj_mat.0).2);
         if comp_x < self.near_cutoff || comp_x >= self.far_cutoff {
             return None;
         }
 
         // project y
         let comp_y =
-            (p.0 * (self.proj_mat.1).0)
-            + (p.1 * (self.proj_mat.1).1)
-            + (p.2 * (self.proj_mat.1).2);
-        let proj_x = fi64(i128_div_rem(
-            (comp_y.0 as i128) * (self.focal_len.0 as i128),
-            (comp_x.0 as i128) + (self.focal_len.0 as i128)
-        ).0 as i64);
+            (p.0 * (self.proj_mat.1).0) + (p.1 * (self.proj_mat.1).1) + (p.2 * (self.proj_mat.1).2);
+        let proj_x = fi64(
+            i128_div_rem(
+                (comp_y.0 as i128) * (self.focal_len.0 as i128),
+                (comp_x.0 as i128) + (self.focal_len.0 as i128),
+            )
+            .0 as i64,
+        );
         if proj_x < self.proj_rect_min.0 || proj_x >= self.proj_rect_max.0 {
             return None;
         }
 
         // project z
         let comp_z =
-            (p.0 * (self.proj_mat.2).0)
-            + (p.1 * (self.proj_mat.2).1)
-            + (p.2 * (self.proj_mat.2).2);
-        let proj_y = fi64(i128_div_rem(
-            (comp_z.0 as i128) * (self.focal_len.0 as i128),
-            (comp_x.0 as i128) + (self.focal_len.0 as i128)
-        ).0 as i64);
+            (p.0 * (self.proj_mat.2).0) + (p.1 * (self.proj_mat.2).1) + (p.2 * (self.proj_mat.2).2);
+        let proj_y = fi64(
+            i128_div_rem(
+                (comp_z.0 as i128) * (self.focal_len.0 as i128),
+                (comp_x.0 as i128) + (self.focal_len.0 as i128),
+            )
+            .0 as i64,
+        );
         if proj_y < self.proj_rect_min.1 || proj_y >= self.proj_rect_max.1 {
             return None;
         }
@@ -312,7 +313,7 @@ impl Cam {
             ((((x - self.proj_rect_min.0).0 as u128) * (self.proj_rect_points.0 as u128))
                 / ((self.proj_rect_size.0).0 as u128)) as u16,
             ((((y - self.proj_rect_min.1).0 as u128) * (self.proj_rect_points.1 as u128))
-                / ((self.proj_rect_size.1).0 as u128)) as u16
+                / ((self.proj_rect_size.1).0 as u128)) as u16,
         ))
     }
 
@@ -332,22 +333,19 @@ impl std::default::Default for Cam {
         let o = fi64::ONE;
         Cam::new(
             (z, z, z),
-            (
-                (o, z, z),
-                (z, o, z),
-                (z, z, o),
-            ),
+            ((o, z, z), (z, o, z), (z, z, o)),
             tmp,
             z,
             (tmp * 2, tmp * 2),
             (-tmp, -tmp),
             (0x200, 0x200),
-        ).unwrap()
+        )
+        .unwrap()
     }
 }
 
 fn main() {
-    use image::{Rgba, RgbaImage, ImageBuffer};
+    use image::{ImageBuffer, Rgba, RgbaImage};
 
     let mut img: RgbaImage = ImageBuffer::new(0x200, 0x200);
     /*for pixel in img.pixels_mut() {
@@ -368,19 +366,28 @@ fn main() {
             let v1 = (fi64!(1.) / n) * i1;
             let v0 = fi64!(1.) - v1;
             let p = (
-                (bez_00.0 * u0 * v0) + (bez_01.0 * u1 * v0) + (bez_10.0 * u0 * v1) + (bez_11.0 * u1 * v1),
-                (bez_00.1 * u0 * v0) + (bez_01.1 * u1 * v0) + (bez_10.1 * u0 * v1) + (bez_11.1 * u1 * v1),
-                (bez_00.2 * u0 * v0) + (bez_01.2 * u1 * v0) + (bez_10.2 * u0 * v1) + (bez_11.2 * u1 * v1)
+                (bez_00.0 * u0 * v0)
+                    + (bez_01.0 * u1 * v0)
+                    + (bez_10.0 * u0 * v1)
+                    + (bez_11.0 * u1 * v1),
+                (bez_00.1 * u0 * v0)
+                    + (bez_01.1 * u1 * v0)
+                    + (bez_10.1 * u0 * v1)
+                    + (bez_11.1 * u1 * v1),
+                (bez_00.2 * u0 * v0)
+                    + (bez_01.2 * u1 * v0)
+                    + (bez_10.2 * u0 * v1)
+                    + (bez_11.2 * u1 * v1),
             );
             match cam.project_point(p) {
                 Some((x, y)) => {
                     img.put_pixel(
                         x as u32,
                         y as u32,
-                        Rgba([i0 as u8 * 5, 0, i0 as u8 * 5, 255])
+                        Rgba([i0 as u8 * 5, 0, i0 as u8 * 5, 255]),
                     );
                 }
-                None => ()
+                None => (),
             }
         }
     }
