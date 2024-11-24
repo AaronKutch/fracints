@@ -1,9 +1,9 @@
 #![feature(proc_macro_hygiene)]
 
 use apint::*;
+use fracints::*;
+use fracints_macros::*;
 use image::{ImageBuffer, Rgb, RgbImage};
-use normints::*;
-use normints_macros::*;
 use std::iter;
 use std::u16;
 

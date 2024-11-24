@@ -1,20 +1,17 @@
-// use an editor with settings so that text wraps around when it goes beyond the screen
-macro_rules! impl_fiN_0 {
+#[macro_export]
+macro_rules! impl_signed {
     (
-        $ty:ident, // the new normalized integer type we are defining
-        $s:expr, // the string represenation of $ty, e.g. "fi8"
-        $iX:ident, // the type used internally
-        $uX:ident, // the unsigned version of $iX
-        // the shift used by a signed normint, equal to $ushift - 1 (compensates for the sign bit)
-        $ishift:expr,
-        // the shift used by an unsigned normint of the same type,
-        // equal to the number of bits of as $ty
-        $ushift:expr,
+        // the new normalized integer type we are defining
+        $ty:ident,
+        // the string represenation of $ty, e.g. "fi8"
+        $s:expr,
+        // the type used internally
+        $iX:ident,
+        // the unsigned version of $iX
+        $uX:ident,
         // closures
-        $normalized_mul:expr, // closure for multiplying normints
-        $normalized_div:expr, // etc
-        $apint_to_fiN:expr,
-        $test:ident, // name of the test function
+        $normalized_mul:expr,
+        $normalized_div:expr,
         $c:expr // constants
     ) => {
         #[allow(non_camel_case_types)]
@@ -23,57 +20,54 @@ macro_rules! impl_fiN_0 {
         pub struct $ty(pub $iX);
 
         impl $ty {
-            /// number of bits
-            pub const BITS: usize = $ushift;
-            /// one positive Unit in the Last Place
+            /// The number of bits in this type
+            pub const BITS: usize = $uX::BITS;
+            /// One positive Unit in the Last Place
             pub const ULP: $ty = $ty(1);
-            /// the smallest number representable by the fiN
+            /// The minimum value representable by a `fiN`
             pub const MIN: $ty = $ty($iX::MIN);
-            /// note that NEG_ONE is not equal to MIN, but to MIN + 1 smallest inc.
-            /// The purpose of NEG_ONE in contrast to MIN is preventing certain overflows, such as
-            /// `fiN::MIN.wrapping_mul(fiN::MIN)` or `fiN::wrapping_abs(fiN::MIN)`
+            /// A numerical value of negative one.
+            ///
+            /// Note that `NEG_ONE` is not equal to `MIN`, but to `MIN + ULP`.
+            /// The purpose of `NEG_ONE` in contrast to `MIN` is preventing
+            /// certain overflows, such as `fiN::MIN.wrapping_mul(fiN::MIN)` or
+            /// `fiN::wrapping_abs(fiN::MIN)`.
             pub const NEG_ONE: $ty = $ty(-$iX::MAX);
-            /// zero
+            /// Zero.
             pub const ZERO: $ty = $ty(0);
-            /// for fiN, ONE and MAX are the same. Prefer to use MAX when wanting to emphasize the
-            /// true numeric bounds, ONE otherwise.
+            /// For `fiN`, `ONE` and `MAX` are the same. Prefer to use `MAX` when
+            /// wanting to emphasize the true numeric bounds or ordered maximum,
+            /// and instead use `ONE` for numeric values.
             pub const ONE: $ty = $ty($iX::MAX);
-            /// the largest number representable by the fiN
+            /// The maximum value representable by a `fiN``
             pub const MAX: $ty = $ty($iX::MAX);
 
-            /// Converts `src`, assumed to be a &str representation of an fiN in base `radix`
-            /// (which must be in the range 2u32..=36u32), to fiN. `src` can be arbitrarily long.
+            /// Converts `src`, assumed to be a &str representation of an `fiN` in base `radix`
+            /// (which must be in the range `2u32..=36u32`), to `fiN`.
             ///
-            /// The number must be in the range (-1,1) (e.g. &"0.43987236", &-"0.999", &"0.000001",
-            /// &"-.12345", &".999999", &".1")
+            /// `src` can be arbitrarily long but significance usually stops after a number
+            /// of chars. TODO this is always constant with respect to radix?.
+            ///
+            /// The number must be in the range `(-1.0,1.0)` (e.g. `&"0.43987236"`,
+            /// `&-"0.999"`, `&"0.000001"`, `&"-.12345"`, `&".999999"`, `&".1"`).
             /// Other cases are:
-            ///  - &"-1." => fiN::NEG_ONE
-            ///  - &"0." => fiN::ZERO
-            ///  - &"1." => fiN::ONE (or fiN::MAX)
+            ///  - `&"-1."` => `fiN::NEG_ONE`
+            ///  - `&"0."` => `fiN::ZERO`
+            ///  - `&"1."` => `fiN::ONE`
             /// An arbitrary number of `0` and `_` is allowed after these strings.
             ///
-            /// All valid inputs have decimal points to prevent confusing `fi32(1)` (which is just
-            /// `fi32::ULP`) with the procedural macro `fi32!(1)` (invalid, should be `fi32!(1.)`).
+            /// All valid inputs have decimal points to prevent confusing expressions such as
+            /// `fi32(1)` (which is just `fi32::ULP`) with the procedural macro call `fi32!(1)`
+            /// (invalid, should be `fi32!(1.)`).
             ///
-            /// Note: the resulting fiN can be plus or minus 0.5 ULP away from the best
+            /// Note: the resulting `fiN` can be plus or minus 0.5 ULP away from the best
             /// approximation that can be made of src. If there exists two possible values that are
-            /// both exactly 0.5 ULPs away from `src`, then the value with a larger absolute value
-            /// is chosen.
+            /// both exactly 0.5 ULPs away from `src`, then it rounds to what is even in the
+            /// non-fraction representation.
             ///
-            /// # Errors
-            /// see the NormintParseError documentation for parsing errors.
-            ///
-            /// # Examples
-            /// ```
-            /// use normints::fi16;
-            /// assert_eq!(fi16::from_str_radix(&"-1.0",10).unwrap(),fi16::NEG_ONE);
-            ///
-            /// assert_eq!(fi16::from_str_radix(&"0.123456789",10).unwrap(),fi16(4045));
-            /// assert_eq!(fi16(4045).to_string(), "0.12344".to_string());
-            /// ```
-            #[cfg(feature = "std")]
-            pub fn from_str_radix(src: &str, radix: u32) -> Result<Self, NormintParseError> {
-                use NormintParseError::*;
+            /// See the [FracintParseError] documentation for parsing errors and examples.
+            pub fn from_str_radix(src: &str, radix: u32) -> Result<Self, FracintParseError> {
+                use FracintParseError::*;
                 if radix < 2 || radix > 36 {
                     return Err(RadixOutOfRange);
                 }
@@ -161,6 +155,8 @@ macro_rules! impl_fiN_0 {
                         }
                     }
                 }
+                todo!();
+                /*
                 // To understand how this works, imagine `fi8::from_str_radix(&"0.123", 10)`.
                 // The routine above will produce `tmp = 123` and `mul = 1000`. Shifting `tmp` by
                 // `$ishift` will result in `tmp = 123 * 128 = 15744`. Dividing `tmp` by `mul`
@@ -189,18 +185,18 @@ macro_rules! impl_fiN_0 {
                     Ok(-output) // $ty::MIN is caught above, so no overflow
                 } else {
                     Ok(output)
-                }
+                }*/
             }
 
-            /// Converts the fiN to a string representation in base `radix`, with a numerical error
-            /// of <= 0.5 ULP.
+            /// Converts the `fiN` to a string representation in base `radix`,
+            /// with a numerical error of <= 0.5 ULP.
             ///
             /// There are some special cases:
-            ///  - `fiN::ONE` => "1." (the decimal point here is a reminder that 1 cannot be
-            ///    exactly represented in fiN)
-            ///  - `fiN::NEG_ONE` | `fiN::MIN` => "-1." (to prevent `fiN::MIN` propagation)
-            ///  - `fiN::ZERO` => "0." (the decimal point here is to correspond with
-            ///    `from_str_radix`)
+            /// - `fiN::ONE` => "1." (the decimal point here is a reminder that 1 cannot be
+            ///   exactly represented in `fiN`, and to preserve roundtrips)
+            /// - `fiN::NEG_ONE` | `fiN::MIN` => "-1." (to prevent `fiN::MIN` propagation)
+            /// - `fiN::ZERO` => "0." (the decimal point here is to correspond with
+            ///   `from_str_radix` roundtrips)
             ///
             /// To know the max number of digits displayed, consider what happens when fi32(0) is
             /// incremented internally to fi32(1). The value it represents will go from 0 to
@@ -213,21 +209,10 @@ macro_rules! impl_fiN_0 {
             /// If there are trailing zeros such as "0.7500000000", then it will be trimmed to
             /// "0.75".
             ///
-            /// # Panics
+            /// # Errors
             ///
-            /// If `radix` is not in the range `2u32..=36u32`, this will panic.
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use normints::fi16;
-            /// assert_eq!(fi16::NEG_ONE.to_string_radix(10),"-1.".to_string());
-            ///
-            /// assert_eq!(fi16::from_str_radix(&"0.123456789",10).unwrap(),fi16(4045));
-            /// assert_eq!(fi16(4045).to_string(), "0.12344".to_string());
-            /// ```
-            #[cfg(feature = "std")]
-            pub fn to_string_radix(&self, radix: u32) -> String {
+            /// If `radix` is not in the range `2u32..=36u32`, this will return `None`.
+            pub fn to_string_radix(&self, radix: u32) -> Option<String> {
                 assert!(
                     radix >= 2 && radix <= 36,
                     "radix must lie in the range `[2, 36]` - found {}",
@@ -240,6 +225,8 @@ macro_rules! impl_fiN_0 {
                     _ => (),
                 }
 
+                todo!()
+                /*
                 // Except in radixes that are a power-of-two (2, 4, 8, 16, 32) or larger than
                 // `$iX::MAX` (which is not possible for i8), The number of digits needed for a
                 // unique representation is always equal to the number of digits needed for
@@ -342,7 +329,7 @@ macro_rules! impl_fiN_0 {
                     }
                     s.push(char::from(ascii));
                 }
-                s
+                s*/
             }
 
             pub fn is_negative(self) -> bool {
@@ -353,11 +340,11 @@ macro_rules! impl_fiN_0 {
                 self >= $ty::ZERO
             }
 
-            /// Returns a number representing sign of `self`.
+            /// Returns a value representing the sign of `self`.
             ///
-            /// * `fiN::NEG_ONE` if the number is negative
-            /// * `fiN::ZERO` if the number is zero
-            /// * `fiN::ONE` if the number is positive
+            /// - `fiN::NEG_ONE` if the value is negative
+            /// - `fiN::ZERO` if the value is zero
+            /// - `fiN::ONE` if the value is positive
             pub fn signum(self) -> Self {
                 if self < $ty::ZERO {
                     $ty::NEG_ONE
@@ -434,8 +421,9 @@ macro_rules! impl_fiN_0 {
 
             /// Wrapping reciprocal of `self`.
             ///
-            /// # Overflow behavior
+            /// # Note
             ///
+            /// The sign bit is preserved except for the corner case:
             /// `fiN::MIN.wrapping_inv()` -> `iX::ZERO`
             pub fn wrapping_inv(self) -> $iX {
                 $iX::MAX / self.0
@@ -462,6 +450,7 @@ macro_rules! impl_fiN_0 {
                 self.checked_inv().unwrap_or(-1)
             }
 
+            // TODO
             /*
             /// Computes the square root of `self.saturating_abs()`
             pub fn saturating_abs_sqrt(&self) -> Self {
@@ -525,7 +514,7 @@ macro_rules! impl_fiN_0 {
                 }
             }
 
-            /// Saturating addition. Saturates at the numeric bounds fiN::NEG_ONE and fiN::ONE
+            /// Saturating addition. Saturates at the numeric bounds `fiN::NEG_ONE` and `fiN::ONE`
             /// instead of overflowing.
             pub fn saturating_add(self, other: Self) -> Self {
                 // note that $ty::MAX added to 0 does not overflow but $ty::MIN added to 0 does
@@ -573,24 +562,23 @@ macro_rules! impl_fiN_0 {
                 }
             }
 
-            /// Saturating subtraction. Saturates at the numeric bounds fiN::NEG_ONE and fiN::ONE
-            /// instead of overflowing.
+            /// Saturating subtraction. Saturates at the numeric bounds `fiN::NEG_ONE` and
+            /// `fiN::ONE` instead of overflowing.
             pub fn saturating_sub(self, other: Self) -> Self {
-                self.checked_sub(other)
-                    //TODO: make extensive unit test for this
-                    .unwrap_or_else(|| {
-                        if other <= $ty::ZERO {
-                            $ty::ONE
-                        } else {
-                            $ty::NEG_ONE
-                        }
-                    })
+                self.checked_sub(other).unwrap_or_else(|| {
+                    if other <= $ty::ZERO {
+                        $ty::ONE
+                    } else {
+                        $ty::NEG_ONE
+                    }
+                })
             }
 
-            /// Wrapping normint multiplication. There is only one case where overflow can occur.
+            /// Wrapping fracint multiplication.
             ///
             /// # Overflow Behavior
             ///
+            /// There is only one case where overflow can occur:
             /// `fiN::MIN.wrapping_mul(fiN::MIN)` -> `fiN::MIN`.
             pub fn wrapping_mul(self, other: Self) -> Self {
                 $ty($normalized_mul(self.0, other.0))
@@ -598,6 +586,7 @@ macro_rules! impl_fiN_0 {
 
             /// Returns a tuple of `self.wrapping_mul(other)` along with a boolean indicating
             /// whether an overflow happened.
+            ///
             /// Note that only the overflow possible is the corner case
             /// `fiN::MIN.wrapping_mul(fiN::MIN)` -> `fiN::MIN`.
             pub fn overflowing_mul(self, other: Self) -> (Self, bool) {
@@ -607,7 +596,7 @@ macro_rules! impl_fiN_0 {
                 )
             }
 
-            /// Same as `overflowing_mul` except it returns an `Option<fiN>`, where `Some(fiN)`
+            /// Same as `overflowing_mul` except it returns an `Option<fiN>`, where `Some`
             /// means no overflow and `None` means overflow.
             pub fn checked_mul(self, other: Self) -> Option<Self> {
                 match self.overflowing_mul(other) {
@@ -616,8 +605,8 @@ macro_rules! impl_fiN_0 {
                 }
             }
 
-            /// Saturating normint multiplication. Saturates at the numeric bounds fiN::NEG_ONE and
-            /// fiN::ONE instead of overflowing.
+            /// Saturating fracint multiplication. Saturates at the numeric bounds `fiN::NEG_ONE`
+            /// and `fiN::ONE` instead of overflowing.
             pub fn saturating_mul(self, other: Self) -> Self {
                 if self == $ty::MIN && other == $ty::MIN {
                     $ty::ONE
@@ -626,7 +615,7 @@ macro_rules! impl_fiN_0 {
                 }
             }
 
-            /// Wrapping normint division.
+            /// Wrapping fracint division.
             /// It is strongly recommended to use `saturating_div` instead unless all of the
             /// invariants can be upheld
             ///
@@ -669,15 +658,15 @@ macro_rules! impl_fiN_0 {
                 }
             }
 
-            /// Saturating normint division. Saturates at the numeric bounds `fiN::NEG_ONE` and
+            /// Saturating fracint division. Saturates at the numeric bounds `fiN::NEG_ONE` and
             /// `fiN::ONE` instead of overflowing.
             ///
             /// Panics are prevented and saturation handled in this way:
-            ///     *if `other == fiN::ZERO`, `self.signum()` is returned
-            ///     *else if `self.saturating_abs() >= other.saturating_abs()`, it will return
-            ///      `fiN::NEG_ONE` if their signs are not equal, `fiN::ONE` otherwise (except for
-            ///      `other == fiN::ZERO` as shown above)
-            ///     *else it will return `self.wrapping_div(other)`
+            /// - if `other == fiN::ZERO`, `self.signum()` is returned
+            /// - else if `self.saturating_abs() >= other.saturating_abs()`, it will return
+            ///   `fiN::NEG_ONE` if their signs are not equal, `fiN::ONE` otherwise (except for
+            ///   `other == fiN::ZERO` as shown above)
+            /// - else it will return `self.wrapping_div(other)`
             pub fn saturating_div(self, other: Self) -> Self {
                 if other == $ty::ZERO {
                     self.signum()
@@ -694,7 +683,7 @@ macro_rules! impl_fiN_0 {
             }
 
             /*
-            /// Wrapping normint remainder.
+            /// Wrapping fracint remainder.
             ///
             /// The current implementation is not final. (see issue TODO)
             ///
@@ -851,7 +840,7 @@ macro_rules! impl_fiN_0 {
 
             /// Calculates `cos((tau/4) * theta)` or `cos((pi/2) * theta)`.
             /// By having a (tau/4) constant and cleverly rearranging the taylor series, this
-            /// provides a basic way to calculate cosine for normints.
+            /// provides a basic way to calculate cosine for fracints.
             /// Max Error:
             /// TODO ULPS
             pub fn cos_taudiv4_taylor(self) -> $ty {
@@ -866,7 +855,7 @@ macro_rules! impl_fiN_0 {
 
             /// Calculates `sin((tau/4) * theta)` or `sin((pi/2) * theta)`.
             /// By having a (tau/4) constant and cleverly rearranging the taylor series, this
-            /// provides a basic way to calculate sine for normints.
+            /// provides a basic way to calculate sine for fracints.
             /// Max Error:
             /// TODO ULPS
             pub fn sin_taudiv4_taylor(self) -> $ty {
@@ -904,8 +893,6 @@ macro_rules! impl_fiN_0 {
             }
 
             // TODO
-            #[cfg(feature = "std")]
-            #[inline]
             pub fn bezerp(bez: &[$ty], t: &$ty) -> $ty {
                 let mut temp1 = bez.to_vec();
                 let mut temp0: Vec<$ty>;
@@ -923,8 +910,6 @@ macro_rules! impl_fiN_0 {
 
             /// TODO
             /// bez.len() must == weight.len()
-            #[cfg(feature = "std")]
-            #[inline]
             pub fn rational_bezerp(bez: &[$ty], weight: &[$ty], t: &$ty) -> $ty {
                 let mut temp1 = bez.to_vec();
                 let mut temp0: Vec<$ty>;
@@ -959,7 +944,7 @@ macro_rules! impl_fiN_0 {
         }
 
         impl FromStr for $ty {
-            type Err = NormintParseError;
+            type Err = fracintParseError;
 
             /// Uses `Self::from_str_radix(s, 10)`.
             fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -1165,7 +1150,6 @@ macro_rules! impl_fiN_0 {
             }
         }
 
-        #[cfg(feature = "std")]
         impl Sum for $ty {
             fn sum<I>(iter: I) -> Self
             where
@@ -1175,7 +1159,6 @@ macro_rules! impl_fiN_0 {
             }
         }
 
-        #[cfg(feature = "std")]
         impl Product for $ty {
             fn product<I>(iter: I) -> Self
             where
@@ -1185,7 +1168,6 @@ macro_rules! impl_fiN_0 {
             }
         }
 
-        #[cfg(feature = "std")]
         impl<'a> Sum<&'a $ty> for $ty {
             fn sum<I>(iter: I) -> Self
             where
@@ -1195,7 +1177,6 @@ macro_rules! impl_fiN_0 {
             }
         }
 
-        #[cfg(feature = "std")]
         impl<'a> Product<&'a $ty> for $ty {
             fn product<I>(iter: I) -> Self
             where
@@ -1210,11 +1191,11 @@ macro_rules! impl_fiN_0 {
         /// # Examples
         ///
         /// ```
-        /// extern crate normints;
+        /// extern crate fracints;
         /// extern crate rand;
         /// use rand::Rng;
         /// #[macro_use]
-        /// use normints::*;
+        /// use fracints::*;
         /// let mut rng = rand::thread_rng();
         /// println!("{}", rng.gen::<fi128>());
         /// ```
@@ -1228,197 +1209,6 @@ macro_rules! impl_fiN_0 {
                     x
                 }
             }
-        }
-
-        /* I very much dislike num-traits. If someone wants to update this to work, then PR.
-        #[cfg(feature = "num-traits")]
-        impl num_traits::Num for $ty {
-            type FromStrRadixErr = NormintParseError;
-            fn from_str_radix(
-                str: &str,
-                radix: u32
-            ) -> Result<Self, Self::FromStrRadixErr> {
-                Self::from_str_radix(str,radix)
-            }
-        }
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::Zero for $ty {
-            fn zero() -> Self {
-                Self::ZERO
-            }
-            fn is_zero(&self) -> bool {
-                *self == Self::ZERO
-            }
-        }
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::One for $ty {
-            fn one() -> Self {
-                Self::ONE
-            }
-        }
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::Bounded {
-            fn min_value() -> Self {Self::NEG_ONE}
-            fn max_value() -> Self {Self::ONE}
-        }
-
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::Signed for $ty {
-            fn abs(&self) -> Self {self.wrapping_abs()}
-            fn abs_sub(&self, other: &Self) -> Self {self.wrapping_sub(other).abs()}
-            fn signum(&self) -> Self {self.signum()}
-            fn is_positive(&self) -> bool {self.is_positive}
-            fn is_negative(&self) -> bool {self.is_negative}
-        }
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::Inv {
-            type Output = $iX;
-            fn inv(self) -> Self {
-                Self::wrapping_inv(self)
-            }
-        }
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::CheckedAdd for $ty {
-            fn checked_add(&self, other: &Self) -> Option<Self> {
-                //TODO: see if this can be fixed for others
-                /*match self.overflowing_add(*other) {
-                    (x, false) => Some(x),
-                    (_, true) => None,
-                }*/
-                self.checked_add(other)
-            }
-        }
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::CheckedSub for $ty {
-            fn checked_sub(&self, other: &Self) -> Option<Self> {
-                match self.overflowing_sub(*other) {
-                    (x, false) => Some(x),
-                    (_, true) => None,
-                }
-            }
-        }
-
-        #[cfg(feature = "num-traits")]
-        impl num_traits::Saturating for $ty {
-            fn saturating_add(self, other: Self) -> Self {
-                Self::saturating_add(self, other)
-            }
-
-            fn saturating_sub(self, other: Self) -> Self {
-                Self::saturating_add(self, other)
-            }
-        }
-        */
-
-        #[cfg(feature = "std")]
-        #[cfg(test)]
-        #[test]
-        fn $test() {
-            assert_eq!($ty($iX::MIN / 2).to_string(), "-0.5".to_string());
-            assert_eq!($ty($iX::MAX / 2 + 1).to_string(), "0.5".to_string());
-            assert_eq!($ty::from_str_radix("-0.5", 10).unwrap(), $ty($iX::MIN / 2));
-            assert_eq!(
-                $ty::from_str_radix("0.5", 10).unwrap(),
-                $ty($iX::MAX / 2 + 1)
-            );
-            assert_eq!($ty::from_str_radix("-0.5", 10).unwrap(), $ty($iX::MIN / 2));
-            // should work in all availiable bases
-            // TODO there is early returns in the functions for these meaning I need to write some
-            // more
-            for r in 2..37 {
-                assert_eq!($ty::MIN.to_string_radix(r), "-1.".to_string());
-                assert_eq!($ty::NEG_ONE.to_string_radix(r), "-1.".to_string());
-                assert_eq!($ty::ZERO.to_string_radix(r), "0.".to_string());
-                assert_eq!($ty::ONE.to_string_radix(r), "1.".to_string());
-                assert_eq!($ty::MAX.to_string_radix(r), "1.".to_string());
-                assert_eq!($ty::from_str_radix("-1.", r).unwrap(), $ty::NEG_ONE);
-                assert_eq!($ty::from_str_radix("0.", r).unwrap(), $ty::ZERO);
-                assert_eq!($ty::from_str_radix("1.", r).unwrap(), $ty::ONE);
-            }
-            // some of this is mainly to check that `apint` is working as expected
-            assert_eq!($ty($iX::MAX / 4 + 1) + $ty($iX::MAX / 4), $ty($iX::MAX / 2));
-            assert_eq!($ty($iX::MIN / 4) + $ty($iX::MIN / 4), $ty($iX::MIN / 2));
-            assert_eq!($ty($iX::MAX / 4 + 1) + $ty($iX::MIN / 4), $ty(0));
-            assert_eq!($ty($iX::MIN / 4) + $ty($iX::MAX / 4 + 1), $ty(0));
-            assert_eq!($ty($iX::MAX / 4) - $ty($iX::MAX / 4), $ty(0));
-            assert_eq!($ty($iX::MIN / 4) - $ty($iX::MIN / 4), $ty(0));
-            assert_eq!(
-                $ty($iX::MAX / 4 + 1) - $ty($iX::MIN / 4),
-                $ty($iX::MAX / 2 + 1)
-            );
-            assert_eq!($ty($iX::MIN / 4) - $ty($iX::MAX / 4 + 1), $ty($iX::MIN / 2));
-
-            assert_eq!($ty($iX::MAX).wrapping_add($ty($iX::MAX)), $ty(-2));
-            assert_eq!($ty($iX::MAX).wrapping_add($ty($iX::MIN)), $ty(-1));
-            assert_eq!($ty($iX::MIN).wrapping_add($ty($iX::MAX)), $ty(-1));
-            assert_eq!($ty($iX::MIN).wrapping_add($ty($iX::MIN)), $ty(0));
-            assert_eq!($ty($iX::MAX).wrapping_sub($ty($iX::MAX)), $ty(0));
-            assert_eq!($ty($iX::MAX).wrapping_sub($ty($iX::MIN)), $ty(-1));
-            assert_eq!($ty($iX::MIN).wrapping_sub($ty($iX::MAX)), $ty(1));
-            assert_eq!($ty($iX::MIN).wrapping_sub($ty($iX::MIN)), $ty(0));
-
-            assert_eq!($ty($iX::MIN / 2) * $ty($iX::MIN / 2), $ty($iX::MAX / 4 + 1));
-            assert_eq!($ty($iX::MIN / 2) * $ty($iX::MAX / 2 + 1), $ty($iX::MIN / 4));
-            assert_eq!($ty($iX::MAX / 2 + 1) * $ty($iX::MIN / 2), $ty($iX::MIN / 4));
-            assert_eq!(
-                $ty($iX::MAX / 2 + 1) * $ty($iX::MAX / 2 + 1),
-                $ty($iX::MAX / 4 + 1)
-            );
-
-            assert_eq!($ty($iX::MIN / 2).wrapping_div($ty($iX::MIN / 2)), $ty::MIN);
-            assert_eq!(
-                $ty($iX::MIN / 2).wrapping_div($ty($iX::MAX / 2 + 1)),
-                $ty::MIN
-            );
-            assert_eq!(
-                $ty($iX::MAX / 2 + 1).wrapping_div($ty($iX::MAX / 2 + 1)),
-                $ty::MIN
-            );
-            assert_eq!(
-                $ty($iX::MAX / 4 + 1).wrapping_div($ty($iX::MAX / 2 + 1)),
-                $ty($iX::MAX / 2 + 1)
-            );
-            assert_eq!(
-                $ty($iX::MIN / 2).saturating_div($ty($iX::MIN / 2)),
-                $ty::ONE
-            );
-            assert_eq!(
-                $ty($iX::MIN / 2).saturating_div($ty($iX::MAX / 2 + 1)),
-                $ty::NEG_ONE
-            );
-            assert_eq!(
-                $ty($iX::MAX / 2 + 1).saturating_div($ty($iX::MAX / 2 + 1)),
-                $ty::ONE
-            );
-            assert_eq!(
-                $ty($iX::MAX / 4 + 1).saturating_div($ty($iX::MAX / 2 + 1)),
-                $ty($iX::MAX / 2 + 1)
-            );
-
-            assert_eq!($ty($iX::MIN).wrapping_mul($ty($iX::MIN)), $ty::MIN);
-            assert_eq!($ty($iX::MIN).wrapping_mul($ty($iX::MAX)), $ty::NEG_ONE);
-            assert_eq!($ty($iX::MAX).wrapping_mul($ty($iX::MIN)), $ty::NEG_ONE);
-            assert_eq!($ty($iX::MAX).wrapping_mul($ty($iX::MAX)), $ty($iX::MAX - 1));
-            assert_eq!($ty($iX::MIN).wrapping_div($ty($iX::MIN)), $ty::MIN);
-            assert_eq!($ty($iX::MIN).wrapping_div($ty($iX::MAX)), $ty::MAX);
-            assert_eq!($ty($iX::MAX).wrapping_div($ty($iX::MAX)), $ty::MIN);
-            assert_eq!($ty($iX::MAX).wrapping_div($ty($iX::MAX)), $ty::MIN);
-            assert_eq!($ty::MIN.saturating_div($ty::MIN), $ty::ONE);
-            assert_eq!($ty::MIN.saturating_div($ty::NEG_ONE), $ty::ONE);
-            assert_eq!($ty::NEG_ONE.saturating_div($ty::MIN), $ty::ONE);
-            assert_eq!($ty::NEG_ONE.saturating_div($ty::NEG_ONE), $ty::ONE);
-            assert_eq!($ty::MIN.saturating_div($ty::MAX), $ty::NEG_ONE);
-            assert_eq!($ty::NEG_ONE.saturating_div($ty::MAX), $ty::NEG_ONE);
-            assert_eq!($ty::MAX.saturating_div($ty::MIN), $ty::NEG_ONE);
-            assert_eq!($ty::MAX.saturating_div($ty::NEG_ONE), $ty::NEG_ONE);
-            assert_eq!($ty::MAX.saturating_div($ty::MAX), $ty::ONE);
         }
     };
 }

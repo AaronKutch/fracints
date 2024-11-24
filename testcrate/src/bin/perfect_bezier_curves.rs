@@ -5,9 +5,9 @@
 
 #![feature(proc_macro_hygiene)]
 
+use fracints::*;
+use fracints_macros::*;
 use image::{ImageBuffer, Rgb, RgbImage};
-use normints::*;
-use normints_macros::*;
 
 fn cubic_bezerp(b: &[fi8], t: fi8) -> fi8 {
     let c0 = (fi8::ONE - t) * (fi8::ONE - t) * (fi8::ONE - t);

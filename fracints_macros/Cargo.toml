@@ -10,5 +10,4 @@ publish = false
 proc-macro = true
 
 [dependencies]
-# TODO use a specialized optimized version of the parser, fuzz against `awint`
-#fracints_core = { path = "../fracints_core" }
+fracints_internals = { path = "../fracints_internals" }

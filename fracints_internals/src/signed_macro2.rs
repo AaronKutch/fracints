@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! impl_fiN_2 {
     (
         $ty:ident,
@@ -6,8 +7,6 @@ macro_rules! impl_fiN_2 {
         $uX:ident,
         $iD:ident,
         $uD:ident,
-        $ishift:expr, // for $ty
-        $ushift:expr, // for $ty
         $clo:expr,
         $chi:expr
     ) => {
@@ -24,7 +23,7 @@ macro_rules! impl_fiN_2 {
             /// // keep the note on one line
             /// ```
             /// #[macro_use]
-            /// use normints::*;
+            /// use fracints::*;
             ///
             /// // note: `from_str_radix` and `to_string_radix` sometimes have small rounding errors when converting
             /// // and displaying, but the `full_mul` on the fiN between those functions is truly exact.
@@ -52,7 +51,7 @@ macro_rules! impl_fiN_2 {
             /// ```
             /// use std::i64;
             /// #[macro_use]
-            /// use normints::*;
+            /// use fracints::*;
             ///
             /// let a = fi32::from_str_radix(&"0.765432198",10).unwrap();
             /// let b = fi32::from_str_radix(&"0.153456789",10).unwrap();
@@ -128,7 +127,7 @@ macro_rules! impl_fiN_2 {
         }
 
         /*impl $tyD {
-                    /// Computes the square root of `self`, and returns it as a normint with half the bits of `self`
+                    /// Computes the square root of `self`, and returns it as a fracint with half the bits of `self`
                     /// note: the performance of this function is poor with numbers close to zero
                     ///
                     /// # Overflow Behavior
@@ -166,21 +165,21 @@ macro_rules! impl_fiN_2 {
 
         /*
                         let mut val0 = $ty::ZERO;
-                        let mut diff = $ty::wrapping_normint_div_int($ty::MAX,2) + $ty::ULP;
+                        let mut diff = $ty::wrapping_fracint_div_int($ty::MAX,2) + $ty::ULP;
                         while diff > $ty::ULP {
                             let val1 = val0 + diff;
                             let val1_sqr = val1*val1;
                             if val1_sqr <= *self {
                                 val0 = val1;
                             }
-                            diff = $ty::wrapping_normint_div_int(diff,2);
+                            diff = $ty::wrapping_fracint_div_int(diff,2);
                         }
                         Some(val0)
                         */
                     }
                 }*/
 
-        /// Lossless and unfailing conversion of a normint to one with double the number of bits.
+        /// Lossless and unfailing conversion of a fracint to one with double the number of bits.
         /// There is not a conversion the other way to stay consistent with the primitives and to
         /// avoid rounding error. Use TODO for truncation and TODO for rounding
         impl From<$ty> for $tyD {

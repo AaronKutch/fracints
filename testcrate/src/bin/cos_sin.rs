@@ -1,8 +1,8 @@
 #![feature(proc_macro_hygiene)]
 
+use fracints::*;
+use fracints_macros::*;
 use image::{ImageBuffer, Rgb, RgbImage};
-use normints::*;
-use normints_macros::*;
 #[allow(unused_imports)]
 use std::{i16, i8};
 

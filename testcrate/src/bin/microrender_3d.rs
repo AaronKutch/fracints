@@ -1,7 +1,7 @@
 #![feature(proc_macro_hygiene)]
 
-use normints::*;
-use normints_macros::*;
+use fracints::*;
+use fracints_macros::*;
 use specialized_div_rem::i128_div_rem;
 use std::convert::TryFrom;
 use std::error::Error;
@@ -308,7 +308,7 @@ impl Cam {
     pub fn project_point(&self, p: Vec3) -> Option<(u16, u16)> {
         let (x, y) = self.project_point_ni_coords(p)?;
 
-        // project from normint coordinates to point coordinates
+        // project from fracint coordinates to point coordinates
         Some((
             ((((x - self.proj_rect_min.0).0 as u128) * (self.proj_rect_points.0 as u128))
                 / ((self.proj_rect_size.0).0 as u128)) as u16,

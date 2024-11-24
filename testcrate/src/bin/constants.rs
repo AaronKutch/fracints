@@ -7,7 +7,7 @@
 //!  -anything else will add more compilation time to this crate
 //!  -some constants are dependent on other constants
 
-use normints::*;
+use fracints::*;
 use std::str::FromStr;
 use std::{i128, i16, i32, i64, i8};
 
@@ -24,7 +24,7 @@ macro_rules! cos_taylor_iters {
         // this is a reduced version of the algorithm with `theta = 0.5`
         let mut factorial_num: $iX = 2;
         let mut factorial_mul: $iX = 2;
-        let mut numerator = $iX::MIN / -4; // normint 0.5 * 0.5
+        let mut numerator = $iX::MIN / -4; // fracint 0.5 * 0.5
         let mut i = 0;
         loop {
             // Overflows will completely mess up the algorithm, and if the numerator is smaller than
@@ -61,7 +61,7 @@ macro_rules! sin_taylor_iters {
         $(
         let mut factorial_num: $iX = 3;
         let mut factorial_mul: $iX = 6;
-        let mut numerator = $iX::MIN / -4; // normint 0.5 * 0.5 * 0.5
+        let mut numerator = $iX::MIN / -4; // fracint 0.5 * 0.5 * 0.5
         let mut i = 0;
         loop {
             match factorial_mul.checked_mul(factorial_num) {

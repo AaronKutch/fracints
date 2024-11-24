@@ -78,8 +78,8 @@ fn general_sanity_test() {
 
 #[cfg(test)]
 pub mod fi32_tests {
-    use normints::NormintParseError::*;
-    use normints::*;
+    use fracints::fracintParseError::*;
+    use fracints::*;
 
     #[test]
     fn ni_generally_ok() {

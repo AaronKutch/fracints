@@ -3,11 +3,11 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 
-macro_rules! impl_normint_macros {
+macro_rules! impl_fracint_macros {
     ($($ty:ident),*) => {$(
         /// Literal conversion into the type.
         ///
-        /// See `fiN::from_str_radix` for definition, and `NormintParseError` for more error
+        /// See `fiN::from_str_radix` for definition, and `fracintParseError` for more error
         /// information.
         ///
         /// Warning: Confusing errors may be produced if what entered into the macro is not
@@ -46,4 +46,4 @@ macro_rules! impl_normint_macros {
     }
 }
 
-impl_normint_macros!(fi8, fi16, fi32, fi64, fi128);
+impl_fracint_macros!(fi8, fi16, fi32, fi64, fi128);

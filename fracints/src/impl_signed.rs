@@ -1,16 +1,8 @@
-// all of the #[allow(unused_imports)] everywhere is for when compiling with certain features
-// enabled or disabled
+use core::fmt;
+use core::iter::{Product, Sum};
 use core::ops::*;
+use core::str::FromStr;
 use core::{i128, i16, i32, i64, i8, u128, u16, u32, u64, u8};
-
-#[cfg(feature = "std")]
-use std::iter::{Product, Sum};
-
-#[cfg(feature = "std")]
-use std::fmt;
-
-#[cfg(feature = "std")]
-use std::str::FromStr;
 
 #[cfg(feature = "rand")]
 use rand::Rng;
@@ -18,11 +10,9 @@ use rand::Rng;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use apint::*;
-
 use crate::constants::*;
 
-use crate::NormintParseError;
+use crate::fracintParseError;
 
 use core::result::Result;
 
@@ -38,7 +28,7 @@ macro_rules! impl_fiN_1 {
         $test:ident,
         $c:expr
     ) => {
-        impl_fiN_0!(
+        impl_signed!(
             $ty,
             $s,
             $iX,

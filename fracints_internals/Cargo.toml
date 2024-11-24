@@ -1,0 +1,9 @@
+[package]
+name = "fracints_internals"
+version = "0.1.0"
+authors = ["Aaron Kutch <aaronkutch@att.net>"]
+description = "Internal utilities for the `fracints` system of crates"
+edition = "2021"
+publish = false
+
+[dependencies]
