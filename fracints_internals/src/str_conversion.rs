@@ -17,7 +17,7 @@ use thiserror::Error;
 /// ```
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum FracintSerdeError {
-    #[error("Radix is outside of the range `2u8..=36u8`")]
+    #[error("Radix is outside of the range `2..=36`")]
     RadixOutOfRange,
     #[error("Input was an empty string")]
     Empty,

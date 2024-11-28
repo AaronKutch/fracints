@@ -6,7 +6,6 @@
 #![feature(proc_macro_hygiene)]
 
 use fracints::*;
-use fracints_macros::*;
 use image::{ImageBuffer, Rgb, RgbImage};
 
 fn cubic_bezerp(b: &[fi8], t: fi8) -> fi8 {

@@ -9,6 +9,7 @@ macro_rules! impl_signed {
         $iX:ident,
         // the unsigned version of $iX
         $uX:ident,
+        $from_str:ident,
         // closures
         $normalized_mul:expr,
         $normalized_div:expr,
@@ -21,7 +22,7 @@ macro_rules! impl_signed {
 
         impl $ty {
             /// The number of bits in this type
-            pub const BITS: usize = $uX::BITS;
+            pub const BITS: usize = $uX::BITS as usize;
             /// One positive Unit in the Last Place
             pub const ULP: $ty = $ty(1);
             /// The minimum value representable by a `fiN`
@@ -42,159 +43,12 @@ macro_rules! impl_signed {
             /// The maximum value representable by a `fiN``
             pub const MAX: $ty = $ty($iX::MAX);
 
-            /// Converts `src`, assumed to be a &str representation of an `fiN` in base `radix`
-            /// (which must be in the range `2u32..=36u32`), to `fiN`.
-            ///
-            /// `src` can be arbitrarily long but significance usually stops after a number
-            /// of chars. TODO this is always constant with respect to radix?.
-            ///
-            /// The number must be in the range `(-1.0,1.0)` (e.g. `&"0.43987236"`,
-            /// `&-"0.999"`, `&"0.000001"`, `&"-.12345"`, `&".999999"`, `&".1"`).
-            /// Other cases are:
-            ///  - `&"-1."` => `fiN::NEG_ONE`
-            ///  - `&"0."` => `fiN::ZERO`
-            ///  - `&"1."` => `fiN::ONE`
-            /// An arbitrary number of `0` and `_` is allowed after these strings.
-            ///
-            /// All valid inputs have decimal points to prevent confusing expressions such as
-            /// `fi32(1)` (which is just `fi32::ULP`) with the procedural macro call `fi32!(1)`
-            /// (invalid, should be `fi32!(1.)`).
-            ///
-            /// Note: the resulting `fiN` can be plus or minus 0.5 ULP away from the best
-            /// approximation that can be made of src. If there exists two possible values that are
-            /// both exactly 0.5 ULPs away from `src`, then it rounds to what is even in the
-            /// non-fraction representation.
-            ///
-            /// See the [FracintParseError] documentation for parsing errors and examples.
-            pub fn from_str_radix(src: &str, radix: u8) -> Result<Self, FracintParseError> {
-                use FracintParseError::*;
-                if radix < 2 || radix > 36 {
-                    return Err(RadixOutOfRange);
-                }
-                let src_len = src.len();
-                let mut chars = src.chars();
-                let (is_negative, len) = match chars.next() {
-                    Some('-') => match chars.next() {
-                        Some('1') => match chars.next() {
-                            Some('.') => loop {
-                                match chars.next() {
-                                    None => return Ok($ty::NEG_ONE),
-                                    Some('0') | Some('_') => (),
-                                    _ => return Err(InvalidCharInFraction),
-                                }
-                            },
-                            None => return Err(NoDecimalPoint),
-                            _ => return Err(InvalidCharAfterOne),
-                        },
-                        Some('0') => match chars.next() {
-                            Some('.') => (true, src_len - 3),
-                            None => return Err(NoDecimalPoint),
-                            _ => return Err(InvalidCharAfterZero),
-                        },
-                        Some('.') => (true, src_len - 2),
-                        None => return Err(SingleNeg),
-                        _ => return Err(InvalidCharAfterNeg),
-                    },
-                    Some('1') => match chars.next() {
-                        Some('.') => loop {
-                            match chars.next() {
-                                None => return Ok($ty::ONE),
-                                Some('0') => (),
-                                _ => return Err(InvalidCharInFraction),
-                            }
-                        },
-                        None => return Err(NoDecimalPoint),
-                        _ => return Err(InvalidCharAfterOne),
-                    },
-                    Some('0') => match chars.next() {
-                        Some('.') => (false, src_len - 2),
-                        None => return Err(NoDecimalPoint),
-                        _ => return Err(InvalidCharAfterZero),
-                    },
-                    Some('.') => (false, src_len - 1),
-                    None => return Err(EmptyInput),
-                    _ => return Err(InvalidBeginningChar),
-                };
-                if len == 0 {
-                    // handles an edge case where `mul` gets shifted to 0, meaning that rounding
-                    // will increase a fiN(0) to fiN(1).
-                    return Ok($ty::ZERO);
-                }
-                // get the raw integer representation of the fraction.
-                // I could use iX::from_str_radix but I may want to do special optimizations in the
-                // future and other things. $uD is used so that $from_str_radix_conversion does not
-                // have to round any to prevent overflow.
-
-                // This multiplies `tmp` by the radix, adds a digit, and repeats. In parallel, a
-                // `mul` variable is being multiplied by the radix as many times as `tmp` is
-                // multiplied by the radix.
-
-                // This is set such that the radix multiplied by itself `chars` times cannot
-                // overflow.
-                let bitwidth = BitWidth::new(
-                    (1usize << (32 - radix.leading_zeros()))
-                        .wrapping_mul(len)
-                        .wrapping_add($ushift),
-                )
-                .unwrap();
-                let radix2 = ApInt::from_u32(radix).into_zero_resize(bitwidth);
-                let mut tmp = ApInt::zero(bitwidth);
-                let mut mul = ApInt::one(bitwidth);
-                for c in chars {
-                    match c.to_ascii_lowercase().to_digit(radix) {
-                        Some(digit) => {
-                            let digit2 = ApInt::from_u32(digit).into_zero_resize(bitwidth);
-                            tmp.wrapping_mul_assign(&radix2).unwrap();
-                            tmp.wrapping_add_assign(&digit2).unwrap();
-                            mul.wrapping_mul_assign(&radix2).unwrap();
-                        }
-                        None => {
-                            if c != '_' {
-                                return Err(InvalidCharInFraction);
-                            }
-                        }
-                    }
-                }
-                todo!();
-                /*
-                // To understand how this works, imagine `fi8::from_str_radix(&"0.123", 10)`.
-                // The routine above will produce `tmp = 123` and `mul = 1000`. Shifting `tmp` by
-                // `$ishift` will result in `tmp = 123 * 128 = 15744`. Dividing `tmp` by `mul`
-                // produces a quotient of 15 and a remainder of 744. The remainder is greater than
-                // or equal to 1000 >> 1, so we round up for a final value of fi8(16). This
-                // corresponds to 0.125, which is as close as possible to the "0.123" input.
-
-                // In order for the rounding to always be correct and within 0.5 ULPs of the input
-                // value, we have to use arbitrary precision arithmetic.
-                tmp.wrapping_shl_assign($ishift).unwrap();
-                let rounding_point = mul.clone().into_wrapping_lshr(1).unwrap();
-                ApInt::wrapping_udivrem_assign(&mut tmp, &mut mul).unwrap();
-                if mul.checked_uge(&rounding_point).unwrap() {
-                    tmp.wrapping_inc();
-                }
-
-                // note: unless the rounding is changed to never incrementing, it is possible to
-                // round to `fiN::MAX + 1`, which needs to be guarded against.
-                let max_value = ApInt::from($iX::MAX).into_zero_resize(bitwidth);
-                if tmp.checked_ugt(&max_value).unwrap() {
-                    tmp.wrapping_dec();
-                }
-
-                let output = $apint_to_fiN(tmp);
-                if is_negative {
-                    Ok(-output) // $ty::MIN is caught above, so no overflow
-                } else {
-                    Ok(output)
-                }*/
-            }
-
             /// Converts the `fiN` to a string representation in base `radix`,
             /// with a numerical error of <= 0.5 ULP.
             ///
             /// There are some special cases:
-            /// - `fiN::ONE` => "1." (the decimal point here is a reminder that 1 cannot be
-            ///   exactly represented in `fiN`, and to preserve roundtrips)
-            /// - `fiN::NEG_ONE` | `fiN::MIN` => "-1." (to prevent `fiN::MIN` propagation)
+            /// - `fiN::ONE` => "1.0"
+            /// - `fiN::NEG_ONE` | `fiN::MIN` => "-1.0"
             /// - `fiN::ZERO` => "0." (the decimal point here is to correspond with
             ///   `from_str_radix` roundtrips)
             ///
@@ -211,17 +65,15 @@ macro_rules! impl_signed {
             ///
             /// # Errors
             ///
-            /// If `radix` is not in the range `2u32..=36u32`, this will return `None`.
-            pub fn to_string_radix(&self, radix: u32) -> Option<String> {
-                assert!(
-                    radix >= 2 && radix <= 36,
-                    "radix must lie in the range `[2, 36]` - found {}",
-                    radix
-                );
+            /// If `radix` is not in the range `2..=36`, this will return `None`.
+            pub fn to_string_radix(&self, radix: u8) -> Option<String> {
+                if (radix < 2) || (radix > 36) {
+                    return None;
+                }
                 match *self {
-                    $ty::NEG_ONE | $ty::MIN => return "-1.".to_string(),
-                    $ty::ZERO => return "0.".to_string(),
-                    $ty::ONE => return "1.".to_string(),
+                    $ty::NEG_ONE | $ty::MIN => return Some("-1.0".to_string()),
+                    $ty::ZERO => return Some("0.0".to_string()),
+                    $ty::ONE => return Some("1.0".to_string()),
                     _ => (),
                 }
 
@@ -749,8 +601,8 @@ macro_rules! impl_signed {
                 // + x^8 / ( (4/tau)^8 * 8! )
                 // - ...
 
-                let cutoff = (self.0 as $uX) >> ($ushift / 2);
-                if cutoff == 0 || cutoff == ($uX::MAX >> ($ushift / 2)) {
+                let cutoff = (self.0 as $uX) >> ($ty::BITS / 2);
+                if cutoff == 0 || cutoff == ($uX::MAX >> ($ty::BITS / 2)) {
                     return $ty::ONE;
                 }
 
@@ -872,7 +724,10 @@ macro_rules! impl_signed {
                 // this compares the highest two bits of `self` offset by a eighth of a circle to
                 // determine which combination to use.
                 let o = self.wrapping_add($ty::MIN / -4).0 as $uX;
-                match ((o & (1 << ($ishift - 1))) != 0, (o & (1 << $ishift)) != 0) {
+                match (
+                    (o & (1 << ($ty::BITS - 2))) != 0,
+                    (o & (1 << ($ty::BITS - 1))) != 0,
+                ) {
                     (false, false) => {
                         let t = self * 2;
                         (t.cos_taudiv4_taylor_base(), t.sin_taudiv4_taylor_base())
@@ -939,16 +794,25 @@ macro_rules! impl_signed {
         impl fmt::Display for $ty {
             /// Uses `self.to_string_radix(10)`.
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, "{}", self.to_string_radix(10))
+                write!(f, "{}", self.to_string_radix(10).unwrap())
             }
         }
 
         impl FromStr for $ty {
-            type Err = fracintParseError;
+            type Err = FracintSerdeError;
 
-            /// Uses `Self::from_str_radix(s, 10)`.
+            /// Conversion from a string representation.
+            ///
+            /// The input can start with a '-' to make the output negative. Then it can optionally start with a "0b", "0o", or a "0x" prefix to use radix 2, 8, or 16 respectively, otherwise it is parsed as radix 10. Then, for fracints there must be a '0' or '1' integer part. '1' is a special case where 1.0 is mapped to `fiN::ONE` or `fiN::NEG_ONE` if negative (avoiding `fiN::MIN` generation), and the fractional part must be zero. If including the fraction, a '.' followed by one more digits in the correct radix should be added. Finally, an exponent can be added by 'e' or 'p' (except radix 16 which must use 'p') and then a number in the same radix is used. The exponent is applied as `* radix^exponent` before round-to-even. '_'s can be used throughout the integer, fraction, and exponent parts as long as one term is not all underspaces.
+            ///
+            /// `s` can be arbitrarily long but significance changes stops after a number
+            /// of chars. TODO this is always constant with respect to radix?.
+            ///
+            /// The number must be in the range `(-1.0,1.0)` or else an overflow error is returned. 1.0 is special cased to map to `fiN::ONE' even though it is not exactly representable.
+            ///
+            /// See the [FracintParseError] documentation for parsing errors and examples.
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                Self::from_str_radix(s, 10)
+                $from_str(s).map(|x| Self(x))
             }
         }
 

@@ -1,4 +1,4 @@
-/// The generating function is in `main.rs`.
+// The generating function is in the testcrate of the repo containing this crate.
 use crate::impl_signed::*;
 
 pub struct Const8 {
@@ -21,6 +21,7 @@ pub const CONST8: Const8 = Const8 {
     sin_taylor_iters: 0,
 };
 
+/*
 pub struct Const16 {
     pub num_4divtau: fi16,
     pub num_4divtau_sqr: fi16,
@@ -99,4 +100,4 @@ pub const CONST128: Const128 = Const128 {
     costaudiv16: fi128(157189957036375388087984223000986562752),
     cos_taylor_iters: 13,
     sin_taylor_iters: 12,
-};
+};*/

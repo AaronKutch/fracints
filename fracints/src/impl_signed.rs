@@ -2,7 +2,7 @@ use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::*;
 use core::str::FromStr;
-use core::{i128, i16, i32, i64, i8, u128, u16, u32, u64, u8};
+use core::primitive::*;
 
 #[cfg(feature = "rand")]
 use rand::Rng;
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::constants::*;
 
-use fracints_internals::FracintSerdeError;
+use fracints_internals::*;
 
 use core::result::Result;
 use fracints_internals::impl_signed;
@@ -24,9 +24,7 @@ macro_rules! impl_signed1 {
         $iX:ident,
         $uX:ident,
         $iD:ident,
-        $ushift:expr,
-        $apint_to_fiN:expr,
-        $test:ident,
+        $from_str:ident,
         $c:expr
     ) => {
         impl_signed!(
@@ -34,12 +32,9 @@ macro_rules! impl_signed1 {
             $s,
             $iX,
             $uX,
-            $ushift - 1,
-            $ushift,
-            |a: $iX, b: $iX| (($iD::from(a) * $iD::from(b)) >> ($ushift - 1)) as $iX,
-            |a: $iX, b: $iX| (($iD::from(a) << ($ushift - 1)) / $iD::from(b)) as $iX,
-            $apint_to_fiN,
-            $test,
+            $from_str,
+            |a: $iX, b: $iX| (($iD::from(a) * $iD::from(b)) >> ($uX::BITS - 1)) as $iX,
+            |a: $iX, b: $iX| (($iD::from(a) << ($uX::BITS - 1)) / $iD::from(b)) as $iX,
             $c
         );
     };
@@ -51,9 +46,7 @@ impl_signed1!(
     i8,
     u8,
     i16,
-    8,
-    |x: ApInt| fi8(x.resize_to_i8()),
-    fi8_ok,
+    i8_from_str,
     CONST8
 );
 /*

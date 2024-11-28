@@ -6,5 +6,7 @@ publish = false
 
 [dependencies]
 fracints = { path = "../fracints" }
+image = "0.25"
+
 
 [dev-dependencies]
