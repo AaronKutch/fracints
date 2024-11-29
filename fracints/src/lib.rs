@@ -65,5 +65,5 @@ mod constants;
 mod impl_signed;
 
 pub use crate::impl_signed::*;
-pub use fracints_macros::*;
 pub use fracints_internals::FracintSerdeError;
+pub use fracints_macros::*;

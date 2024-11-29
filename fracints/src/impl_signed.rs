@@ -1,8 +1,8 @@
 use core::fmt;
 use core::iter::{Product, Sum};
 use core::ops::*;
-use core::str::FromStr;
 use core::primitive::*;
+use core::str::FromStr;
 
 #[cfg(feature = "rand")]
 use rand::Rng;
@@ -40,15 +40,7 @@ macro_rules! impl_signed1 {
     };
 }
 
-impl_signed1!(
-    fi8,
-    "fi8",
-    i8,
-    u8,
-    i16,
-    i8_from_str,
-    CONST8
-);
+impl_signed1!(fi8, "fi8", i8, u8, i16, i8_from_str, CONST8);
 /*
 impl_fiN_2!(fi8, fi16, i8, u8, i16, u16, 7, 8, CONST8, CONST16);
 

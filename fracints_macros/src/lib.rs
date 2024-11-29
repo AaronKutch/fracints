@@ -1,6 +1,6 @@
 extern crate proc_macro;
-use proc_macro::TokenStream;
 use fracints_internals::*;
+use proc_macro::TokenStream;
 
 /// Literal conversion into the type.
 ///
@@ -35,14 +35,8 @@ pub fn fi8(input: TokenStream) -> TokenStream {
         }
     }*/
     match i8_from_str(&s) {
-        Ok(x) => {
-            format!("{}({})", stringify!(fi8), x).parse().unwrap()
-        },
-        Err(e) => panic!(
-            "Invalid `{}` string representation: {}",
-            stringify!(fi8),
-            e,
-        ),
+        Ok(x) => format!("{}({})", stringify!(fi8), x).parse().unwrap(),
+        Err(e) => panic!("Invalid `{}` string representation: {}", stringify!(fi8), e,),
     }
 }
 

@@ -1,4 +1,4 @@
-use std::num::NonZeroUsize;
+use std::{i8, num::NonZeroUsize};
 
 use awint::{Awi, InlAwi};
 use thiserror::Error;
@@ -122,7 +122,8 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
     let mut exp_start = None;
     loop {
         if i >= s.len() {
-            break
+            integer = &s[integer_start..i];
+            break;
         }
         if !is_integral(s[i], radix) {
             if s[i] == b'.' {
@@ -130,30 +131,31 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
             } else if (s[i] == b'e') || (s[i] == b'p') {
                 exp_start = Some(i + 1);
             } else {
-                return Err(InvalidCharInInteger)
+                return Err(InvalidCharInInteger);
             }
+            integer = &s[integer_start..i];
             i += 1;
-            break
+            break;
         }
         i += 1;
     }
-    integer = &s[integer_start..i];
 
     // fraction part, can be followed by 'e' or 'p' for exponent
     if let Some(fraction_start) = fraction_start {
         loop {
             if i >= s.len() {
-                break
+                fraction = Some(&s[fraction_start..i]);
+                break;
             }
             if !is_integral(s[i], radix) {
                 if (s[i] == b'e') || (s[i] == b'p') {
                     exp_start = Some(i + 1);
                 } else {
-                    return Err(InvalidCharInFraction)
+                    return Err(InvalidCharInFraction);
                 }
                 fraction = Some(&s[fraction_start..i]);
                 i += 1;
-                break
+                break;
             }
             i += 1;
         }
@@ -163,19 +165,19 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
     if let Some(mut exp_start) = exp_start {
         loop {
             if i >= s.len() {
-                break
+                break;
             }
             if !is_integral(s[i], radix) {
                 if s[i] == b'-' {
                     if exp_negative {
-                        return Err(InvalidCharInExponent)
+                        return Err(InvalidCharInExponent);
                     }
                     exp_negative = true;
                     exp_start += 1;
                     i += 1;
-                    continue
+                    continue;
                 } else {
-                    return Err(InvalidCharInExponent)
+                    return Err(InvalidCharInExponent);
                 }
             }
             i += 1;
@@ -188,9 +190,9 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
     }
 
     if let Some(fraction) = fraction {
-    if is_empty_or_all_underscores(fraction) {
-        return Err(EmptyFraction);
-    }
+        if is_empty_or_all_underscores(fraction) {
+            return Err(EmptyFraction);
+        }
     }
     let fraction = fraction.unwrap_or(&[]);
 
@@ -212,8 +214,9 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
         0
     };
 
+    // note we handle the sign ourselves, the sign bit is instead room for ONE and NEG_ONE
     match Awi::from_bytes_general(
-        Some(sign),
+        None,
         integer,
         fraction,
         exp,
@@ -221,7 +224,24 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
         NonZeroUsize::new(i8::BITS as usize).unwrap(),
         (i8::BITS - 1) as isize,
     ) {
-        Ok(awi) => Ok(awi.to_i8()),
+        Ok(awi) => {
+            // ONE and NEG_ONE special cases
+            if awi.msb() {
+                if awi.is_imin() {
+                    if sign {
+                        return Ok(-i8::MAX);
+                    } else {
+                        return Ok(i8::MAX);
+                    }
+                } else {
+                    return Err(Overflow);
+                }
+            } else if sign {
+                Ok(-awi.to_i8())
+            } else {
+                Ok(awi.to_i8())
+            }
+        }
         _ => Err(Overflow),
     }
 }
