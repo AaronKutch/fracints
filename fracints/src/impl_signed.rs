@@ -94,6 +94,7 @@ impl_signed!(
         let lo = lhs << 127;
         let hi = lhs >> 1;
         let (quo, _) = dd_division_u256((lo, hi), (rhs, 0));
+        let mut quo = quo.0;
 
         /*
         if lhs_msb {
