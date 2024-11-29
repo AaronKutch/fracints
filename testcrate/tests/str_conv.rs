@@ -1,10 +1,9 @@
 use std::str::FromStr;
 
-use fracints::FracintSerdeError::*;
-use fracints::*;
+use fracints::{FracintSerdeError::*, *};
 
 #[test]
-fn test_fi8() {
+fn from_str() {
     macro_rules! a {
         ($lhs:expr, $rhs:expr) => {
             assert_eq!(fi8::from_str($lhs), $rhs);
@@ -48,4 +47,19 @@ fn test_fi8() {
     a!("0b10e-1000", Ok(fi8(1)));
     a!("-0.001p3", Ok(fi8::NEG_ONE));
     a!("-0.999", Ok(fi8::NEG_ONE));
+}
+
+#[test]
+fn to_str() {
+    macro_rules! a {
+        ($lhs:expr, $rhs:expr) => {
+            assert_eq!($lhs.to_string(), $rhs);
+        };
+    }
+    a!(fi8::ZERO, "0.0");
+    a!(fi8::ONE, "1.0");
+    a!(fi8::NEG_ONE, "-1.0");
+    a!(fi8::MIN, "-1.0");
+    a!(fi8(1), "0.008");
+    a!(fi8(2), "0.016");
 }

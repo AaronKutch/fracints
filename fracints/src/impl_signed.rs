@@ -1,21 +1,19 @@
-use core::fmt;
-use core::iter::{Product, Sum};
-use core::ops::*;
-use core::primitive::*;
-use core::str::FromStr;
+use core::{
+    fmt,
+    iter::{Product, Sum},
+    ops::*,
+    primitive::*,
+    result::Result,
+    str::FromStr,
+};
 
+use fracints_internals::{impl_signed, *};
 #[cfg(feature = "rand")]
 use rand::Rng;
-
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::constants::*;
-
-use fracints_internals::*;
-
-use core::result::Result;
-use fracints_internals::impl_signed;
 
 macro_rules! impl_signed1 {
     (
@@ -24,6 +22,7 @@ macro_rules! impl_signed1 {
         $iX:ident,
         $uX:ident,
         $iD:ident,
+        $to_string:ident,
         $from_str:ident,
         $c:expr
     ) => {
@@ -32,6 +31,7 @@ macro_rules! impl_signed1 {
             $s,
             $iX,
             $uX,
+            $to_string,
             $from_str,
             |a: $iX, b: $iX| (($iD::from(a) * $iD::from(b)) >> ($uX::BITS - 1)) as $iX,
             |a: $iX, b: $iX| (($iD::from(a) << ($uX::BITS - 1)) / $iD::from(b)) as $iX,
@@ -40,7 +40,7 @@ macro_rules! impl_signed1 {
     };
 }
 
-impl_signed1!(fi8, "fi8", i8, u8, i16, i8_from_str, CONST8);
+impl_signed1!(fi8, "fi8", i8, u8, i16, i8_to_string, i8_from_str, CONST8);
 /*
 impl_fiN_2!(fi8, fi16, i8, u8, i16, u16, 7, 8, CONST8, CONST16);
 

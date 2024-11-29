@@ -1,4 +1,5 @@
-// The generating function is in the testcrate of the repo containing this crate.
+// The generating function is in the testcrate of the repo containing this
+// crate.
 use crate::impl_signed::*;
 
 pub struct Const8 {

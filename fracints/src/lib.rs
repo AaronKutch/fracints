@@ -33,37 +33,40 @@ We need a full_mul free function into some kind of u256 for fi128 energies
 */
 
 //! **Important notes about this crate:**
-//! - It is really easy to overflow with the `/` operator. The `saturating_div` operation
-//!   is recommended in many cases.
-//! - Do not confuse `fi32()` with `fi32!()`. One of them is a tuple struct and the other is a
-//!   macro for entering fractions.
-//! - `1 ULP` means the size of 1 increment or decrement of the internal integer, or the
-//!   smallest change in value of a fuN or fiN possible
-//! - The `{}_mul` `{}_div` functions effectively use truncation when producing the result, and
-//!   accuracy can be improved by up to 1 ULP by using `full_mul` followed by rounding instead
-//!   of truncation.
+//! - It is really easy to overflow with the `/` operator. The `saturating_div`
+//!   operation is recommended in many cases.
+//! - Do not confuse `fi32()` with `fi32!()`. One of them is a tuple struct and
+//!   the other is a macro for entering fractions.
+//! - `1 ULP` means the size of 1 increment or decrement of the internal
+//!   integer, or the smallest change in value of a fuN or fiN possible
+//! - The `{}_mul` `{}_div` functions effectively use truncation when producing
+//!   the result, and accuracy can be improved by up to 1 ULP by using
+//!   `full_mul` followed by rounding instead of truncation.
 //!
 //! # Preventing Overflow
-//! The functions `wrapping_abs`, `wrapping_neg` (or the unary `-`), `wrapping_mul`, and
-//! `wrapping_full_mul` can all be used without possibility of overflow, if the `fiN::MIN` value
-//! is guarded against.
-//!     - Use `fiN::NEG_ONE` (`fiN!(-1.)`) instead of `fiN::MIN`, except when you want to do
-//!       something like `.wrapping_sub(fiN::MIN)` (a trick to add by an exact 1) and have checks
-//!       for fiN::MIN
-//!     - In the cases of `wrapping_add` and `wrapping_sub`, avoid overflowing unless it will always
-//!       wrap around into the valid range (or is checked as a special case).
-//!     - Do not use `wrapping_div` directly unless upholding invariants and taking care of fiN::MIN
-//!       produced
+//! The functions `wrapping_abs`, `wrapping_neg` (or the unary `-`),
+//! `wrapping_mul`, and `wrapping_full_mul` can all be used without possibility
+//! of overflow, if the `fiN::MIN` value is guarded against.
+//!     - Use `fiN::NEG_ONE` (`fiN!(-1.)`) instead of `fiN::MIN`, except when
+//!       you want to do something like `.wrapping_sub(fiN::MIN)` (a trick to
+//!       add by an exact 1) and have checks for fiN::MIN
+//!     - In the cases of `wrapping_add` and `wrapping_sub`, avoid overflowing
+//!       unless it will always wrap around into the valid range (or is checked
+//!       as a special case).
+//!     - Do not use `wrapping_div` directly unless upholding invariants and
+//!       taking care of fiN::MIN produced
 //!
 //! # Examples
 //!
-//! See the examples in the testcrate in the cargo workspace of the repo containing this crate.
+//! See the examples in the testcrate in the cargo workspace of the repo
+//! containing this crate.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod constants;
 mod impl_signed;
 
-pub use crate::impl_signed::*;
 pub use fracints_internals::FracintSerdeError;
 pub use fracints_macros::*;
+
+pub use crate::impl_signed::*;

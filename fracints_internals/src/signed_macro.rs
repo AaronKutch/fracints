@@ -1,19 +1,15 @@
 #[macro_export]
 macro_rules! impl_signed {
     (
-        // the new normalized integer type we are defining
         $ty:ident,
-        // the string represenation of $ty, e.g. "fi8"
         $s:expr,
-        // the type used internally
         $iX:ident,
-        // the unsigned version of $iX
         $uX:ident,
+        $to_string:ident,
         $from_str:ident,
-        // closures
         $normalized_mul:expr,
         $normalized_div:expr,
-        $c:expr // constants
+        $c:expr
     ) => {
         #[allow(non_camel_case_types)]
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -23,8 +19,8 @@ macro_rules! impl_signed {
         impl $ty {
             /// The number of bits in this type
             pub const BITS: usize = $uX::BITS as usize;
-            /// One positive Unit in the Last Place
-            pub const ULP: $ty = $ty(1);
+            /// The maximum value representable by a `fiN``
+            pub const MAX: $ty = $ty($iX::MAX);
             /// The minimum value representable by a `fiN`
             pub const MIN: $ty = $ty($iX::MIN);
             /// A numerical value of negative one.
@@ -34,155 +30,16 @@ macro_rules! impl_signed {
             /// certain overflows, such as `fiN::MIN.wrapping_mul(fiN::MIN)` or
             /// `fiN::wrapping_abs(fiN::MIN)`.
             pub const NEG_ONE: $ty = $ty(-$iX::MAX);
-            /// Zero.
-            pub const ZERO: $ty = $ty(0);
             /// For `fiN`, `ONE` and `MAX` are the same. Prefer to use `MAX` when
             /// wanting to emphasize the true numeric bounds or ordered maximum,
             /// and instead use `ONE` for numeric values.
             pub const ONE: $ty = $ty($iX::MAX);
-            /// The maximum value representable by a `fiN``
-            pub const MAX: $ty = $ty($iX::MAX);
+            /// One positive Unit in the Last Place
+            pub const ULP: $ty = $ty(1);
+            /// Zero.
+            pub const ZERO: $ty = $ty(0);
 
-            /// Converts the `fiN` to a string representation in base `radix`,
-            /// with a numerical error of <= 0.5 ULP.
-            ///
-            /// There are some special cases:
-            /// - `fiN::ONE` => "1.0"
-            /// - `fiN::NEG_ONE` | `fiN::MIN` => "-1.0"
-            /// - `fiN::ZERO` => "0." (the decimal point here is to correspond with
-            ///   `from_str_radix` roundtrips)
-            ///
-            /// To know the max number of digits displayed, consider what happens when fi32(0) is
-            /// incremented internally to fi32(1). The value it represents will go from 0 to
-            /// ~0.0000000004657, or a difference of ~4.657*10^-10. These smallest increments (ULPs)
-            /// will always change the tenth place and onward.
-            /// In other words, the number of digits in the fraction is the smallest number of
-            /// digits for which every smallest increment of fiN always produces a unique string.
-            /// This function will thus display a max of ten digits in the fraction when it is
-            /// called with radix 10 on a fi32.
-            /// If there are trailing zeros such as "0.7500000000", then it will be trimmed to
-            /// "0.75".
-            ///
-            /// # Errors
-            ///
-            /// If `radix` is not in the range `2..=36`, this will return `None`.
-            pub fn to_string_radix(&self, radix: u8) -> Option<String> {
-                if (radix < 2) || (radix > 36) {
-                    return None;
-                }
-                match *self {
-                    $ty::NEG_ONE | $ty::MIN => return Some("-1.0".to_string()),
-                    $ty::ZERO => return Some("0.0".to_string()),
-                    $ty::ONE => return Some("1.0".to_string()),
-                    _ => (),
-                }
-
-                todo!()
-                /*
-                // Except in radixes that are a power-of-two (2, 4, 8, 16, 32) or larger than
-                // `$iX::MAX` (which is not possible for i8), The number of digits needed for a
-                // unique representation is always equal to the number of digits needed for
-                // `$iX::MAX + 1` representation.
-                // This is because `1 / ($iX::MAX + 1)` (using perfect precision here) is always
-                // going to have the most significant digit a number of places from the decimal
-                // point equal to the number of digits needed for `$iX::MAX`, except when
-                // `$iX::MAX + 1` can be factored completely into only `radix`. In this case, the
-                // number of digits needed for the representation is one less than `$iX::MAX + 1`.
-
-                // Suppose that `$iX::MAX + 1` was not a power of 2, but rather 10. This edge case
-                // can be seen in `1 / 1000 = 0.001` (4 digits in "1000", but 3 digits in "001").
-
-                // TODO: this can be put into a set of constants
-                let str_len = {
-                    // for being able to divide $iX::MAX + 1
-                    let bitwidth = BitWidth::new($ty::BITS + 1).unwrap();
-                    let radix2 = ApInt::from_u32(radix).into_zero_resize(bitwidth);
-                    let mut val = ApInt::one(bitwidth);
-                    val.wrapping_shl_assign($ty::BITS).unwrap();
-                    let mut len = 0;
-                    loop {
-                        val.wrapping_udiv_assign(&radix2).unwrap();
-                        len += 1;
-                        if val.is_zero() {
-                            break len;
-                        }
-                    }
-                };
-                let factor_num = match radix {
-                    2 | 4 | 8 | 16 | 32 => str_len - 2,
-                    _ => str_len - 1,
-                };
-                let bitwidth = BitWidth::new(
-                    (1usize << (32 - radix.leading_zeros())).wrapping_mul(factor_num + 2),
-                )
-                .unwrap();
-
-                // For example, fi8(16) will result in `(16 * 1000) / 128 = 125` which results in
-                // "0.125". TODO: store a 1000 / 128 constant in fixed point
-
-                let radix2 = ApInt::from_u32(radix).into_zero_resize(bitwidth);
-                let mut mul = ApInt::one(bitwidth);
-                for _ in 0..factor_num {
-                    mul.wrapping_mul_assign(&radix2).unwrap();
-                }
-                // `mul` is now one `radix` factor away from `1000`
-
-                // $ty::MIN is caught earlier so no overflow
-                let mut val = ApInt::from((*self).wrapping_abs().0).into_zero_resize(bitwidth);
-                val.wrapping_mul_assign(&mul).unwrap();
-                val.wrapping_mul_assign(&radix2).unwrap();
-                // `val` is now the `16 * 1000`
-
-                let round = val.get_bit_at($ishift - 1).unwrap();
-                // division by power of two
-                val.wrapping_lshr_assign($ishift).unwrap();
-                if round {
-                    val.wrapping_inc();
-                }
-                // `val` is now the `125`
-
-                // Using a brute force mechanism for simplicity.
-                // what will happen is that the `mul` 100 is compared to `val` 125, and found to
-                // be less than or equal to. `mul` is subtracted from `val` to make 25 and `ascii`
-                // is incremented. The next inner loop breaks, `mul` is divided by the radix, and
-                // when `ascii` is added to the string, `s` is "0.1".
-                //
-                // On the next outer loop, 10 is found to be less than 25, 10 is subtracted from 25,
-                // the ascii is incremented, and this is repeated one more time.
-                // the result is that `mul` is 1, `val` is 5, `s` is "0.12".
-                //
-                // The outer loop runs one more time, and the string ends up as the correct "0.125".
-                let mut s = if self.is_negative() {
-                    String::from("-0.")
-                } else {
-                    String::from("0.")
-                };
-                loop {
-                    if val.is_zero() {
-                        // trailing zeros not included automatically
-                        break;
-                    }
-                    // 48 is ascii for zero
-                    let mut ascii = 48u8;
-                    if mul.checked_ule(&val).unwrap() {
-                        loop {
-                            if mul.checked_ule(&val).unwrap() {
-                                val.wrapping_sub_assign(&mul).unwrap();
-                                ascii += 1;
-                            } else {
-                                break;
-                            }
-                        }
-                    }
-                    mul.wrapping_udiv_assign(&radix2).unwrap();
-                    if ascii > 57 {
-                        // move up ascii table to letters
-                        ascii += 17;
-                    }
-                    s.push(char::from(ascii));
-                }
-                s*/
-            }
+            // TODO decide on how `to_string_general` should work
 
             pub fn is_negative(self) -> bool {
                 self < $ty::ZERO
@@ -220,14 +77,14 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Returns a tuple of `self.wrapping_abs()` along with a boolean indicating whether an
-            /// overflow happened.
+            /// Returns a tuple of `self.wrapping_abs()` along with a boolean indicating
+            /// whether an overflow happened.
             pub fn overflowing_abs(self) -> (Self, bool) {
                 (self.wrapping_abs(), self == $ty::MIN)
             }
 
-            /// Same as `overflowing_abs` except it returns an `Option<fiN>`, where `Some(fiN)`
-            /// means no overflow and `None` means overflow.
+            /// Same as `overflowing_abs` except it returns an `Option<fiN>`, where
+            /// `Some(fiN)` means no overflow and `None` means overflow.
             pub fn checked_abs(self) -> Option<Self> {
                 match self.overflowing_abs() {
                     (x, false) => Some(x),
@@ -235,8 +92,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Saturating absolute value of `self`. It behaves the same way as `wrapping_abs`
-            /// except `fiN::MIN.saturating_abs()` -> `fiN::ONE`
+            /// Saturating absolute value of `self`. It behaves the same way as
+            /// `wrapping_abs` except `fiN::MIN.saturating_abs()` -> `fiN::ONE`
             pub fn saturating_abs(self) -> Self {
                 self.checked_abs().unwrap_or($ty::ONE)
             }
@@ -250,14 +107,14 @@ macro_rules! impl_signed {
                 $ty(self.0.wrapping_neg())
             }
 
-            /// Returns a tuple of `self.wrapping_neg()` along with a boolean indicating whether an
-            /// overflow happened.
+            /// Returns a tuple of `self.wrapping_neg()` along with a boolean indicating
+            /// whether an overflow happened.
             pub fn overflowing_neg(self) -> (Self, bool) {
                 (self.wrapping_neg(), self == $ty::MIN)
             }
 
-            /// Same as `overflowing_neg` except it returns an `Option<fiN>`, where `Some(fiN)`
-            /// means no overflow and `None` means overflow.
+            /// Same as `overflowing_neg` except it returns an `Option<fiN>`, where
+            /// `Some(fiN)` means no overflow and `None` means overflow.
             pub fn checked_neg(self) -> Option<Self> {
                 match self.overflowing_neg() {
                     (x, false) => Some(x),
@@ -265,8 +122,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Saturating negation of `self`. It behaves the same way as `wrapping_neg` except
-            /// `fiN::MIN.saturating_neg()` -> `fiN::ONE`
+            /// Saturating negation of `self`. It behaves the same way as `wrapping_neg`
+            /// except `fiN::MIN.saturating_neg()` -> `fiN::ONE`
             pub fn saturating_neg(self) -> Self {
                 self.checked_neg().unwrap_or($ty::ONE)
             }
@@ -281,14 +138,14 @@ macro_rules! impl_signed {
                 $iX::MAX / self.0
             }
 
-            /// Returns a tuple of `self.wrapping_inv()` along with a boolean indicating whether an
-            /// overflow happened.
+            /// Returns a tuple of `self.wrapping_inv()` along with a boolean indicating
+            /// whether an overflow happened.
             pub fn overflowing_inv(self) -> ($iX, bool) {
                 ($iX::MAX / self.0, self == $ty::ZERO)
             }
 
-            /// Same as `overflowing_inv` except it returns an `Option<iX>`, where `Some(iX)` means
-            /// no overflow and `None` means overflow.
+            /// Same as `overflowing_inv` except it returns an `Option<iX>`, where
+            /// `Some(iX)` means no overflow and `None` means overflow.
             pub fn checked_inv(self) -> Option<$iX> {
                 match self.overflowing_inv() {
                     (x, false) => Some(x),
@@ -296,8 +153,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Saturating negation of `self`. It behaves the same way as `wrapping_inv` except
-            /// `fiN::MIN.saturating_inv()` -> `-1`
+            /// Saturating negation of `self`. It behaves the same way as `wrapping_inv`
+            /// except `fiN::MIN.saturating_inv()` -> `-1`
             pub fn saturating_inv(self) -> $iX {
                 self.checked_inv().unwrap_or(-1)
             }
@@ -338,16 +195,18 @@ macro_rules! impl_signed {
             ///
             /// # Overflow behavior
             ///
-            /// If the numeric value of `self` added to `other` is more than `fiN::MAX` or less than
-            /// `fiN::MIN` (if `fiN::MIN` should be avoided, use `fiN::NEG_ONE` as the minimum value
-            /// instead), modular overflow will happen.
+            /// If the numeric value of `self` added to `other` is more than `fiN::MAX`
+            /// or less than `fiN::MIN` (if `fiN::MIN` should be avoided, use
+            /// `fiN::NEG_ONE` as the minimum value instead), modular overflow will
+            /// happen.
             pub fn wrapping_add(self, other: Self) -> Self {
                 $ty(self.0.wrapping_add(other.0))
             }
 
-            /// Returns a tuple of `self.wrapping_add(other)` along with a boolean indicating
-            /// whether an overflow happened.
-            /// Note that if `self.wrapping_add(other) == fiN::MIN`, it is counted as overflow.
+            /// Returns a tuple of `self.wrapping_add(other)` along with a boolean
+            /// indicating whether an overflow happened.
+            /// Note that if `self.wrapping_add(other) == fiN::MIN`, it is counted as
+            /// overflow.
             pub fn overflowing_add(self, other: Self) -> (Self, bool) {
                 let (internal, overflow) = self.0.overflowing_add(other.0);
                 if internal == $iX::MIN {
@@ -357,8 +216,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Same as `overflowing_add` except it returns an `Option<fiN>`, where `Some(fiN)`
-            /// means no overflow and `None` means overflow.
+            /// Same as `overflowing_add` except it returns an `Option<fiN>`, where
+            /// `Some(fiN)` means no overflow and `None` means overflow.
             pub fn checked_add(self, other: Self) -> Option<Self> {
                 match self.overflowing_add(other) {
                     (v, false) => Some(v),
@@ -366,8 +225,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Saturating addition. Saturates at the numeric bounds `fiN::NEG_ONE` and `fiN::ONE`
-            /// instead of overflowing.
+            /// Saturating addition. Saturates at the numeric bounds `fiN::NEG_ONE` and
+            /// `fiN::ONE` instead of overflowing.
             pub fn saturating_add(self, other: Self) -> Self {
                 // note that $ty::MAX added to 0 does not overflow but $ty::MIN added to 0 does
                 // overflow, and $ty::MIN.wrapping_add($ty::ZERO) and
@@ -386,16 +245,18 @@ macro_rules! impl_signed {
             ///
             /// # Overflow behavior
             ///
-            /// If the numeric value of `self` subtracted by `other` is more than `fiN::MAX` or
-            /// less than `fiN::MIN` (if `fiN::MIN` should be avoided, use `fiN::NEG_ONE` as the
-            /// minimum value instead), modular overflow will happen.
+            /// If the numeric value of `self` subtracted by `other` is more than
+            /// `fiN::MAX` or less than `fiN::MIN` (if `fiN::MIN` should be avoided,
+            /// use `fiN::NEG_ONE` as the minimum value instead), modular overflow
+            /// will happen.
             pub fn wrapping_sub(self, other: Self) -> Self {
                 $ty(self.0.wrapping_sub(other.0))
             }
 
-            /// Returns a tuple of `self.wrapping_sub(other)` along with a boolean indicating
-            /// whether an overflow happened.
-            /// Note that if `self.wrapping_sub(other) == fiN::MIN`, it is counted as overflow.
+            /// Returns a tuple of `self.wrapping_sub(other)` along with a boolean
+            /// indicating whether an overflow happened.
+            /// Note that if `self.wrapping_sub(other) == fiN::MIN`, it is counted as
+            /// overflow.
             pub fn overflowing_sub(self, other: Self) -> (Self, bool) {
                 let (internal, overflow) = self.0.overflowing_sub(other.0);
                 if internal == $iX::MIN {
@@ -405,8 +266,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Same as `overflowing_sub` except it returns an `Option<fiN>`, where `Some(fiN)`
-            /// means no overflow and `None` means overflow.
+            /// Same as `overflowing_sub` except it returns an `Option<fiN>`, where
+            /// `Some(fiN)` means no overflow and `None` means overflow.
             pub fn checked_sub(self, other: Self) -> Option<Self> {
                 match self.overflowing_sub(other) {
                     (v, false) => Some(v),
@@ -414,8 +275,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Saturating subtraction. Saturates at the numeric bounds `fiN::NEG_ONE` and
-            /// `fiN::ONE` instead of overflowing.
+            /// Saturating subtraction. Saturates at the numeric bounds `fiN::NEG_ONE`
+            /// and `fiN::ONE` instead of overflowing.
             pub fn saturating_sub(self, other: Self) -> Self {
                 self.checked_sub(other).unwrap_or_else(|| {
                     if other <= $ty::ZERO {
@@ -436,8 +297,8 @@ macro_rules! impl_signed {
                 $ty($normalized_mul(self.0, other.0))
             }
 
-            /// Returns a tuple of `self.wrapping_mul(other)` along with a boolean indicating
-            /// whether an overflow happened.
+            /// Returns a tuple of `self.wrapping_mul(other)` along with a boolean
+            /// indicating whether an overflow happened.
             ///
             /// Note that only the overflow possible is the corner case
             /// `fiN::MIN.wrapping_mul(fiN::MIN)` -> `fiN::MIN`.
@@ -448,8 +309,8 @@ macro_rules! impl_signed {
                 )
             }
 
-            /// Same as `overflowing_mul` except it returns an `Option<fiN>`, where `Some`
-            /// means no overflow and `None` means overflow.
+            /// Same as `overflowing_mul` except it returns an `Option<fiN>`, where
+            /// `Some` means no overflow and `None` means overflow.
             pub fn checked_mul(self, other: Self) -> Option<Self> {
                 match self.overflowing_mul(other) {
                     (v, false) => Some(v),
@@ -457,8 +318,8 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Saturating fracint multiplication. Saturates at the numeric bounds `fiN::NEG_ONE`
-            /// and `fiN::ONE` instead of overflowing.
+            /// Saturating fracint multiplication. Saturates at the numeric bounds
+            /// `fiN::NEG_ONE` and `fiN::ONE` instead of overflowing.
             pub fn saturating_mul(self, other: Self) -> Self {
                 if self == $ty::MIN && other == $ty::MIN {
                     $ty::ONE
@@ -468,14 +329,15 @@ macro_rules! impl_signed {
             }
 
             /// Wrapping fracint division.
-            /// It is strongly recommended to use `saturating_div` instead unless all of the
-            /// invariants can be upheld
+            /// It is strongly recommended to use `saturating_div` instead unless all of
+            /// the invariants can be upheld
             ///
             /// # Overflow Behavior
             ///
-            /// Overflow will happen if `self.saturating_abs() >= other.saturating_abs()`. TODO
-            /// test this extensively Note that fiN::MIN can be produced if `self` and `other` are
-            /// not equal in sign but equal in absolute value.
+            /// Overflow will happen if `self.saturating_abs() >=
+            /// other.saturating_abs()`. TODO test this extensively Note that
+            /// fiN::MIN can be produced if `self` and `other` are not equal in sign
+            /// but equal in absolute value.
             ///
             /// # Panics
             ///
@@ -487,9 +349,10 @@ macro_rules! impl_signed {
                 $ty($normalized_div(self.0, other.0))
             }
 
-            /// Returns a tuple of `self.wrapping_div(other)` (with exceptions for division by zero)
-            /// along with a boolean indicating whether an overflow happened.
-            /// If `other == fiN::ZERO`, `(self.signum(),true)` is returned.
+            /// Returns a tuple of `self.wrapping_div(other)` (with exceptions for
+            /// division by zero) along with a boolean indicating whether an
+            /// overflow happened. If `other == fiN::ZERO`, `(self.signum(),true)`
+            /// is returned.
             pub fn overflowing_div(self, other: Self) -> (Self, bool) {
                 if other == $ty::ZERO {
                     (self.signum(), true)
@@ -501,8 +364,9 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Same as `overflowing_div` except it returns an `Option<fiN>`, where `Some(fiN)`
-            /// means no overflow and `None` means overflow or divide by zero.
+            /// Same as `overflowing_div` except it returns an `Option<fiN>`, where
+            /// `Some(fiN)` means no overflow and `None` means overflow or divide by
+            /// zero.
             pub fn checked_div(self, other: Self) -> Option<Self> {
                 match self.overflowing_div(other) {
                     (v, false) => Some(v),
@@ -510,14 +374,14 @@ macro_rules! impl_signed {
                 }
             }
 
-            /// Saturating fracint division. Saturates at the numeric bounds `fiN::NEG_ONE` and
-            /// `fiN::ONE` instead of overflowing.
+            /// Saturating fracint division. Saturates at the numeric bounds
+            /// `fiN::NEG_ONE` and `fiN::ONE` instead of overflowing.
             ///
             /// Panics are prevented and saturation handled in this way:
             /// - if `other == fiN::ZERO`, `self.signum()` is returned
-            /// - else if `self.saturating_abs() >= other.saturating_abs()`, it will return
-            ///   `fiN::NEG_ONE` if their signs are not equal, `fiN::ONE` otherwise (except for
-            ///   `other == fiN::ZERO` as shown above)
+            /// - else if `self.saturating_abs() >= other.saturating_abs()`, it will
+            ///   return `fiN::NEG_ONE` if their signs are not equal, `fiN::ONE`
+            ///   otherwise (except for `other == fiN::ZERO` as shown above)
             /// - else it will return `self.wrapping_div(other)`
             pub fn saturating_div(self, other: Self) -> Self {
                 if other == $ty::ZERO {
@@ -590,8 +454,8 @@ macro_rules! impl_signed {
                 }
             }*/
 
-            /// Intended to only be called for `-0.5 <= self <= 0.5`. This function has overflows
-            /// outside of this range.
+            /// Intended to only be called for `-0.5 <= self <= 0.5`. This function has
+            /// overflows outside of this range.
             fn cos_taudiv4_taylor_base(self) -> $ty {
                 // This is based on the equation
                 // cos((tau/4) * x) =
@@ -641,8 +505,8 @@ macro_rules! impl_signed {
                 sum
             }
 
-            /// Intended to only be called for `-0.5 <= theta <= 0.5`. This function has overflows
-            /// outside of this range.
+            /// Intended to only be called for `-0.5 <= theta <= 0.5`. This function has
+            /// overflows outside of this range.
             fn sin_taudiv4_taylor_base(self) -> $ty {
                 // This is based on the equation
                 // sin((tau/4) * x) =
@@ -691,8 +555,8 @@ macro_rules! impl_signed {
             }
 
             /// Calculates `cos((tau/4) * theta)` or `cos((pi/2) * theta)`.
-            /// By having a (tau/4) constant and cleverly rearranging the taylor series, this
-            /// provides a basic way to calculate cosine for fracints.
+            /// By having a (tau/4) constant and cleverly rearranging the taylor series,
+            /// this provides a basic way to calculate cosine for fracints.
             /// Max Error:
             /// TODO ULPS
             pub fn cos_taudiv4_taylor(self) -> $ty {
@@ -706,8 +570,8 @@ macro_rules! impl_signed {
             }
 
             /// Calculates `sin((tau/4) * theta)` or `sin((pi/2) * theta)`.
-            /// By having a (tau/4) constant and cleverly rearranging the taylor series, this
-            /// provides a basic way to calculate sine for fracints.
+            /// By having a (tau/4) constant and cleverly rearranging the taylor series,
+            /// this provides a basic way to calculate sine for fracints.
             /// Max Error:
             /// TODO ULPS
             pub fn sin_taudiv4_taylor(self) -> $ty {
@@ -721,8 +585,8 @@ macro_rules! impl_signed {
             }
 
             pub fn cos_sin_pi_taylor(self) -> ($ty, $ty) {
-                // this compares the highest two bits of `self` offset by a eighth of a circle to
-                // determine which combination to use.
+                // this compares the highest two bits of `self` offset by a eighth of a circle
+                // to determine which combination to use.
                 let o = self.wrapping_add($ty::MIN / -4).0 as $uX;
                 match (
                     (o & (1 << ($ty::BITS - 2))) != 0,
@@ -792,9 +656,13 @@ macro_rules! impl_signed {
         }
 
         impl fmt::Display for $ty {
-            /// Uses `self.to_string_radix(10)`.
+            /// Converts to a base 10 string representation
+            ///
+            /// `fiN::ONE` and `fiN::NEG_ONE` are special cased to "1.0" and "-1.0"
+            /// respectively.
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, "{}", self.to_string_radix(10).unwrap())
+                // TODO use constant sized buffers
+                write!(f, "{}", $to_string(self.0))
             }
         }
 
@@ -803,14 +671,28 @@ macro_rules! impl_signed {
 
             /// Conversion from a string representation.
             ///
-            /// The input can start with a '-' to make the output negative. Then it can optionally start with a "0b", "0o", or a "0x" prefix to use radix 2, 8, or 16 respectively, otherwise it is parsed as radix 10. Then, for fracints there must be a '0' or '1' integer part. '1' is a special case where 1.0 is mapped to `fiN::ONE` or `fiN::NEG_ONE` if negative (avoiding `fiN::MIN` generation), and the fractional part must be zero. If including the fraction, a '.' followed by one more digits in the correct radix should be added. Finally, an exponent can be added by 'e' or 'p' (except radix 16 which must use 'p') and then a number in the same radix is used. The exponent is applied as `* radix^exponent` before round-to-even. '_'s can be used throughout the integer, fraction, and exponent parts as long as one term is not all underspaces.
+            /// The input can start with a '-' to make the output negative. Then it can
+            /// optionally start with a "0b", "0o", or a "0x" prefix to use radix 2, 8,
+            /// or 16 respectively, otherwise it is parsed as radix 10. There must
+            /// be an integer part with digits in the correct radix. If including
+            /// the fraction, a '.' followed by one more digits in the correct radix
+            /// should be added. Finally, an exponent can be added by 'e' or 'p'
+            /// (except radix 16 which must use 'p') and then a number in the same
+            /// radix is used. The exponent is applied as `* radix^exponent` before
+            /// round-to-even. '_'s can be used throughout the integer, fraction,
+            /// and exponent parts as long as one term is not all underspaces.
             ///
-            /// `s` can be arbitrarily long but significance changes stops after a number
-            /// of chars. TODO this is always constant with respect to radix?.
+            /// `s` can be arbitrarily long but significance changes stops after a
+            /// number of chars. TODO this is always constant with respect to
+            /// radix?.
             ///
-            /// The number must be in the range `(-1.0,1.0)` or else an overflow error is returned. 1.0 is special cased to map to `fiN::ONE' even though it is not exactly representable.
+            /// The number must be in the range `(-1.0,1.0)` or else an overflow error
+            /// is returned. 1.0 is special cased to map to `fiN::ONE' even though
+            /// it is not exactly representable, and -1.0 is special cased to map to
+            /// `fiN::NEG_ONE` to avoid introducing `fiN::MIN`.
             ///
-            /// See the [FracintParseError] documentation for parsing errors and examples.
+            /// See the [FracintParseError] documentation for parsing errors and
+            /// examples.
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 $from_str(s).map(|x| Self(x))
             }
@@ -819,6 +701,7 @@ macro_rules! impl_signed {
         #[cfg(not(debug_assertions))]
         impl Neg for $ty {
             type Output = Self;
+
             fn neg(self) -> Self::Output {
                 Self::wrapping_neg(self)
             }
@@ -827,6 +710,7 @@ macro_rules! impl_signed {
         #[cfg(debug_assertions)]
         impl Neg for $ty {
             type Output = Self;
+
             fn neg(self) -> Self::Output {
                 Self::checked_neg(self).unwrap()
             }
@@ -835,6 +719,7 @@ macro_rules! impl_signed {
         #[cfg(not(debug_assertions))]
         impl Add for $ty {
             type Output = Self;
+
             fn add(self, other: Self) -> Self::Output {
                 Self::wrapping_add(self, other)
             }
@@ -843,6 +728,7 @@ macro_rules! impl_signed {
         #[cfg(debug_assertions)]
         impl Add for $ty {
             type Output = Self;
+
             fn add(self, other: Self) -> Self::Output {
                 Self::checked_add(self, other).unwrap()
             }
@@ -857,6 +743,7 @@ macro_rules! impl_signed {
         #[cfg(not(debug_assertions))]
         impl Sub for $ty {
             type Output = Self;
+
             fn sub(self, rhs: Self) -> Self::Output {
                 Self::wrapping_sub(self, rhs)
             }
@@ -865,6 +752,7 @@ macro_rules! impl_signed {
         #[cfg(debug_assertions)]
         impl Sub for $ty {
             type Output = Self;
+
             fn sub(self, rhs: Self) -> Self::Output {
                 Self::checked_sub(self, rhs).unwrap()
             }
@@ -879,6 +767,7 @@ macro_rules! impl_signed {
         #[cfg(not(debug_assertions))]
         impl Mul for $ty {
             type Output = Self;
+
             fn mul(self, other: Self) -> Self::Output {
                 Self::wrapping_mul(self, other)
             }
@@ -887,6 +776,7 @@ macro_rules! impl_signed {
         #[cfg(debug_assertions)]
         impl Mul for $ty {
             type Output = Self;
+
             fn mul(self, other: Self) -> Self::Output {
                 Self::checked_mul(self, other).unwrap()
             }
@@ -895,6 +785,7 @@ macro_rules! impl_signed {
         #[cfg(not(debug_assertions))]
         impl Mul<$iX> for $ty {
             type Output = Self;
+
             fn mul(self, other: $iX) -> Self::Output {
                 $ty(self.0.wrapping_mul(other))
             }
@@ -903,6 +794,7 @@ macro_rules! impl_signed {
         #[cfg(debug_assertions)]
         impl Mul<$iX> for $ty {
             type Output = Self;
+
             fn mul(self, other: $iX) -> Self::Output {
                 $ty(self.0.checked_mul(other).unwrap())
             }
@@ -923,6 +815,7 @@ macro_rules! impl_signed {
         #[cfg(not(debug_assertions))]
         impl Div for $ty {
             type Output = $ty;
+
             fn div(self, rhs: Self) -> Self {
                 Self::wrapping_div(self, rhs)
             }
@@ -931,6 +824,7 @@ macro_rules! impl_signed {
         #[cfg(debug_assertions)]
         impl Div for $ty {
             type Output = $ty;
+
             fn div(self, rhs: Self) -> Self {
                 Self::checked_div(self, rhs).unwrap()
             }
@@ -939,6 +833,7 @@ macro_rules! impl_signed {
         #[cfg(not(debug_assertions))]
         impl Div<$iX> for $ty {
             type Output = Self;
+
             fn div(self, other: $iX) -> Self::Output {
                 $ty(self.0.wrapping_div(other))
             }
@@ -947,6 +842,7 @@ macro_rules! impl_signed {
         #[cfg(debug_assertions)]
         impl Div<$iX> for $ty {
             type Output = Self;
+
             fn div(self, other: $iX) -> Self::Output {
                 $ty(self.0.checked_div(other).unwrap())
             }
@@ -988,6 +884,7 @@ macro_rules! impl_signed {
 
         impl Shr<$uX> for $ty {
             type Output = Self;
+
             fn shr(self, rhs: $uX) -> Self {
                 $ty(self.0 >> rhs)
             }
@@ -995,6 +892,7 @@ macro_rules! impl_signed {
 
         impl Shl<$uX> for $ty {
             type Output = Self;
+
             fn shl(self, rhs: $uX) -> Self {
                 $ty(self.0 << rhs)
             }
@@ -1002,6 +900,7 @@ macro_rules! impl_signed {
 
         impl Shr<usize> for $ty {
             type Output = Self;
+
             fn shr(self, rhs: usize) -> Self {
                 $ty(self.0 >> rhs)
             }
@@ -1009,6 +908,7 @@ macro_rules! impl_signed {
 
         impl Shl<usize> for $ty {
             type Output = Self;
+
             fn shl(self, rhs: usize) -> Self {
                 $ty(self.0 << rhs)
             }

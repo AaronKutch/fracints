@@ -1,11 +1,12 @@
 use std::{i8, num::NonZeroUsize};
 
-use awint::{Awi, InlAwi};
+use awint::{Awi, InlAwi, FP};
 use thiserror::Error;
 
 // TODO check if thiserror can do docs all in one
 
-/// The error enum used to specify what parsing error happened when parsing a fracint
+/// The error enum used to specify what parsing error happened when parsing a
+/// fracint
 ///
 /// TODO
 /// ```todo
@@ -43,7 +44,29 @@ pub enum FracintSerdeError {
     Other,
 }
 
-/// Conversion to the internal integer for the fracint
+// TODO do this in a more optimized way without `awint`
+
+/// Conversion of the internal integer of a fracint to a base 10 string
+pub fn i8_to_string(x: i8) -> String {
+    const TMP: i8 = -i8::MAX;
+    match x {
+        TMP | i8::MIN => return "-1.0".to_string(),
+        0 => return "0.0".to_string(),
+        i8::MAX => return "1.0".to_string(),
+        _ => (),
+    }
+    let sign = x < 0;
+    let x = FP::new(true, InlAwi::from_i8(x), (i8::BITS - 1) as isize).unwrap();
+    let (int, frac) = FP::to_str_general(&x, 10, false, 1, 1, 4096).unwrap();
+    if sign {
+        format!("-{int}.{frac}")
+    } else {
+        format!("{int}.{frac}")
+    }
+}
+
+/// Conversion from a string representation to the internal integer of a
+/// fracint.
 pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
     use FracintSerdeError::*;
 
@@ -214,7 +237,8 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
         0
     };
 
-    // note we handle the sign ourselves, the sign bit is instead room for ONE and NEG_ONE
+    // note we handle the sign ourselves, the sign bit is instead room for ONE and
+    // NEG_ONE
     match Awi::from_bytes_general(
         None,
         integer,

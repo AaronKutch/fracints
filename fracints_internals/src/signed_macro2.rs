@@ -1,22 +1,13 @@
 #[macro_export]
 macro_rules! impl_fiN_2 {
-    (
-        $ty:ident,
-        $tyD:ident,
-        $iX:ident,
-        $uX:ident,
-        $iD:ident,
-        $uD:ident,
-        $clo:expr,
-        $chi:expr
-    ) => {
+    ($ty:ident, $tyD:ident, $iX:ident, $uX:ident, $iD:ident, $uD:ident, $clo:expr, $chi:expr) => {
         impl $ty {
             /// Numerically exact multiplication of `self` and `other`
             ///
             /// # Overflow Behavior
             ///
-            /// `fiN::MIN.full_mul(fiN::MIN)` -> `niY::MIN`, where niY is a normalized integer type
-            /// with double the number of bits of fiN.
+            /// `fiN::MIN.full_mul(fiN::MIN)` -> `niY::MIN`, where niY is a normalized
+            /// integer type with double the number of bits of fiN.
             ///
             /// # Examples
             ///
@@ -41,10 +32,11 @@ macro_rules! impl_fiN_2 {
                 $tyD(($iD::from(self.0) * $iD::from(other.0)) << 1)
             }
 
-            /// Division of `self` and `other`, which returns a integer representing a fixed point
-            /// number with X + 1 bits in the integer part and X - 1 bits in the fractional part
-            /// Note: this is not numerically exact, but it cannot overflow with any input. Be
-            /// careful because it can still produce a `fiN::MIN` value.
+            /// Division of `self` and `other`, which returns a integer representing a
+            /// fixed point number with X + 1 bits in the integer part and X - 1
+            /// bits in the fractional part Note: this is not numerically exact, but
+            /// it cannot overflow with any input. Be careful because it can still
+            /// produce a `fiN::MIN` value.
             ///
             /// # Examples
             ///
@@ -53,21 +45,27 @@ macro_rules! impl_fiN_2 {
             /// #[macro_use]
             /// use fracints::*;
             ///
-            /// let a = fi32::from_str_radix(&"0.765432198",10).unwrap();
-            /// let b = fi32::from_str_radix(&"0.153456789",10).unwrap();
+            /// let a = fi32::from_str_radix(&"0.765432198", 10).unwrap();
+            /// let b = fi32::from_str_radix(&"0.153456789", 10).unwrap();
             /// assert_eq!(a.wrapping_full_div(b), 10711504782i64);
             /// // a divided by b should equal 4.9879331047...
             /// // 10711504782/2^31 equals     4.9879331058...
             ///
-            /// let c = fi32::from_str_radix(&"0.123456789",10).unwrap();
-            /// let d = fi32::from_str_radix(&"0.987654321",10).unwrap();
+            /// let c = fi32::from_str_radix(&"0.123456789", 10).unwrap();
+            /// let d = fi32::from_str_radix(&"0.987654321", 10).unwrap();
             /// // c is less than d, and is then able to fit into a `fi32`
-            /// assert_eq!(fi32(c.wrapping_full_div(d) as i32).to_string(), "0.1249999986".to_string());
+            /// assert_eq!(
+            ///     fi32(c.wrapping_full_div(d) as i32).to_string(),
+            ///     "0.1249999986".to_string()
+            /// );
             ///
-            /// let c = fi32::from_str_radix(&"0.123456789",10).unwrap();
-            /// let d = fi32::from_str_radix(&"-0.987654321",10).unwrap();
+            /// let c = fi32::from_str_radix(&"0.123456789", 10).unwrap();
+            /// let d = fi32::from_str_radix(&"-0.987654321", 10).unwrap();
             /// // works with signs
-            /// assert_eq!(fi32(c.wrapping_full_div(d) as i32).to_string(), "-0.1249999986".to_string());
+            /// assert_eq!(
+            ///     fi32(c.wrapping_full_div(d) as i32).to_string(),
+            ///     "-0.1249999986".to_string()
+            /// );
             ///
             /// // not an edge case
             /// assert_eq!(fi32::MIN.wrapping_full_div(fi32::MIN), 2147483648i64);
@@ -179,9 +177,10 @@ macro_rules! impl_fiN_2 {
                     }
                 }*/
 
-        /// Lossless and unfailing conversion of a fracint to one with double the number of bits.
-        /// There is not a conversion the other way to stay consistent with the primitives and to
-        /// avoid rounding error. Use TODO for truncation and TODO for rounding
+        /// Lossless and unfailing conversion of a fracint to one with double the number
+        /// of bits. There is not a conversion the other way to stay consistent with the
+        /// primitives and to avoid rounding error. Use TODO for truncation and TODO for
+        /// rounding
         impl From<$ty> for $tyD {
             fn from(x: $ty) -> Self {
                 $tyD($iD::from(x.0) << $ushift)
