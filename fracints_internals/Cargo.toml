@@ -9,3 +9,6 @@ publish = false
 [dependencies]
 awint = { version = "0.17", default-features = false, features = ["alloc"] }
 thiserror = "2.0"
+
+[dev-dependencies]
+fracints = { path = "../fracints" }
