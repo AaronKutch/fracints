@@ -1,6 +1,5 @@
 /*
 TODO
-Does it panic??: This means that code in debug mode will trigger a panic on this case and optimized code will return `fiN::MIN` without a panic.
 add `to_string_fraction_radix`
 Make errors in proc macro friendly
 remove as much experimental stuff as possible

@@ -15,7 +15,7 @@ publish = false
 fracints_internals = { version = "0.1.0", path = "../fracints_internals" }
 fracints_macros = { version = "0.1.0", path = "../fracints_macros" }
 rand = { version = "0.8", optional = true }
-serde = { version = "1", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
 
 [features]
 default = ["std"]

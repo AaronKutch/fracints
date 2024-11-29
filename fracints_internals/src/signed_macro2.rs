@@ -16,11 +16,14 @@ macro_rules! impl_fiN_2 {
             /// #[macro_use]
             /// use fracints::*;
             ///
-            /// // note: `from_str_radix` and `to_string_radix` sometimes have small rounding errors when converting
-            /// // and displaying, but the `full_mul` on the fiN between those functions is truly exact.
+            /// // note: `from_str_radix` and `to_string_radix` sometimes have small rounding
+            /// // errors when converting
+            /// // and displaying, but the `full_mul` on the fiN between those functions is
+            /// // truly exact.
             /// assert_eq!(
-            ///     fi32::from_str_radix(&"0.123456789",10).unwrap()
-            ///         .wrapping_full_mul(fi32::from_str_radix(&"0.123456789",10).unwrap())
+            ///     fi32::from_str_radix(&"0.123456789", 10)
+            ///         .unwrap()
+            ///         .wrapping_full_mul(fi32::from_str_radix(&"0.123456789", 10).unwrap())
             ///         .to_string_radix(10),
             ///     "0.01524157879479210234".to_string()
             /// );
@@ -104,11 +107,22 @@ macro_rules! impl_fiN_2 {
             }*/
             /*
             /// Calculates `sin((2pi/2^(X+3)) * theta)`
-            /// Returns a tuple of the cosine and sine of the input, which is assumed to be in units of 2pi/2^(X+3) radians (e.g. for fi32 it is sin((2pi/2^35) * theta) and for fi64 it is sin((2pi/2^67) * theta)). The reason for the `+3` has to do with internal optimizations and has the added bonus that the function is more continuous than the other trig functions (e.g. a circle is graphed using max precision using this function, the pixels will be around TODO ULPs from each other, contrasted with TODO for the fourier based functions).
-            /// This function has the properties of being inaccurate by TODO, the output is very close to normal, it is relatively continuous
+            /// Returns a tuple of the cosine and sine of the input, which is assumed to be in
+            /// units of 2pi/2^(X+3) radians (e.g. for fi32 it is sin((2pi/2^35) * theta) and for
+            /// fi64 it is sin((2pi/2^67) * theta)). The reason for the `+3` has to do with
+            /// internal optimizations and has the added bonus that the function is more continuous
+            /// than the other trig functions (e.g. a circle is graphed using max precision using
+            /// this function, the pixels will be around TODO ULPs from each other, contrasted with
+            /// TODO for the fourier based functions).
+            /// This function has the properties of being inaccurate by TODO, the output is very
+            /// close to normal, it is relatively continuous
             /// It is the fastest way to compute normal vectors except for using lookup tables
             pub fn cos_sin_2pidiviXplus3_fast(theta: $iD) -> ($ty, $ty) {
-                //take a circular arc of the unit circle from 0 to 2pi/8 radians, and make the rational bezier curve that generates that arc. Translate the points so that the middle control point is at the origin. This eliminates some terms, and when we calculate on this curve we undo the translation (but minus 1 ULP to prevent overflow), followed by reflections to get the answer.
+                //take a circular arc of the unit circle from 0 to 2pi/8 radians, and make the
+                rational bezier curve that generates that arc. Translate the points so that the
+                middle control point is at the origin. This eliminates some terms, and when we
+                calculate on this curve we undo the translation (but minus 1 ULP to prevent
+                overflow), followed by reflections to get the answer.
                 //let translation = ($ty::ONE,($clo.sqrt2minus1));
                 let mask_lo: $iD = {
                     let mut temp = 0;
@@ -125,14 +139,16 @@ macro_rules! impl_fiN_2 {
         }
 
         /*impl $tyD {
-                    /// Computes the square root of `self`, and returns it as a fracint with half the bits of `self`
+                    /// Computes the square root of `self`, and returns it as a fracint with
+                    /// half the bits of `self`
                     /// note: the performance of this function is poor with numbers close to zero
                     ///
                     /// # Overflow Behavior
                     ///
                     /// if the number is negative, this returns zero
                     pub fn wrapping_halfsize_sqrt(&self) -> $ty {
-                        //find the most significant binary digit that is 1. Unrolling the first 8 iterations for speed
+                        //find the most significant binary digit that is 1. Unrolling the first 8
+                        iterations for speed
                         let val = self.0 as $uD;
                         if val <= 0 {return $ty::ZERO} //handles 0 and the most significant digit
                         let most_significant_place: usize =
@@ -147,14 +163,17 @@ macro_rules! impl_fiN_2 {
                             {
                                 let i: usize = $ishift - 9;
                                 loop {
-                                    //val == 0 is caught above so loop terminates at or before i == 0
+                                    //val == 0 is caught above so loop terminates at or
+                                    //before i == 0
                                     if (val & (1 << i)) != 0 {break i}
                                     i -= 1;
                                 }
                             };
                         //the lookup table has the square roots of 2^(0) up to 2^($ushift)
-                        //the maximum error of this approximation to the true square root, for any input, is (2^(X/2))*(sqrt(2)-1)
-                        let mut temp = $clo.lut_wrapping_halfsize_sqrt[most_significant_place] as $uD;
+                        //the maximum error of this approximation to the true square root, for
+                        //any input, is (2^(X/2))*(sqrt(2)-1)
+                        let mut temp = $clo.lut_wrapping_halfsize_sqrt[most_significant_place]
+                            as $uD;
                         for _ in 0..$clo.iters_wrapping_halfsize_sqrt {
                             temp = (val + (temp*temp)) / (temp << 1);
                         }

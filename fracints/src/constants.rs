@@ -5,9 +5,6 @@ use crate::impl_signed::*;
 pub struct Const8 {
     pub num_4divtau: fi8,
     pub num_4divtau_sqr: fi8,
-    pub sqrt2div2: fi8,
-    pub sqrt2minus1: fi8,
-    pub costaudiv16: fi8,
     pub cos_taylor_iters: usize,
     pub sin_taylor_iters: usize,
 }
@@ -15,9 +12,6 @@ pub struct Const8 {
 pub const CONST8: Const8 = Const8 {
     num_4divtau: fi8(81),
     num_4divtau_sqr: fi8(52),
-    sqrt2div2: fi8(91),
-    sqrt2minus1: fi8(53),
-    costaudiv16: fi8(118),
     cos_taylor_iters: 0,
     sin_taylor_iters: 0,
 };

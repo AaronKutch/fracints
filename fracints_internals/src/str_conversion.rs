@@ -1,4 +1,4 @@
-use std::{i8, num::NonZeroUsize};
+use std::num::NonZeroUsize;
 
 use awint::{Awi, InlAwi, FP};
 use thiserror::Error;
@@ -253,12 +253,12 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
             if awi.msb() {
                 if awi.is_imin() {
                     if sign {
-                        return Ok(-i8::MAX);
+                        Ok(-i8::MAX)
                     } else {
-                        return Ok(i8::MAX);
+                        Ok(i8::MAX)
                     }
                 } else {
-                    return Err(Overflow);
+                    Err(Overflow)
                 }
             } else if sign {
                 Ok(-awi.to_i8())

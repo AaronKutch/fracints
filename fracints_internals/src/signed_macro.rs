@@ -179,10 +179,12 @@ macro_rules! impl_signed {
             /// If `self.is_negative` then the function panics.
             pub fn wrapping_sqrt(&self) -> Self {}
 
-            /// Returns a tuple of `self.wrapping_sqrt(other)` along with a boolean indicating whether an overflow happened.
+            /// Returns a tuple of `self.wrapping_sqrt(other)` along with a boolean indicating
+            /// whether an overflow happened.
             pub fn overflowing_sqrt(&self) -> Self {}
 
-            /// Same as `overflowing_sqrt` except it returns an `Option<fiN>`, where `Some(fiN)` means no overflow and `None` means overflow.
+            /// Same as `overflowing_sqrt` except it returns an `Option<fiN>`, where `Some(fiN)`
+            /// means no overflow and `None` means overflow.
             pub fn checked_sqrt(self) -> Option<Self> {
                 match self.overflowing_sqrt() {
                     (x, false) => Some(x),
