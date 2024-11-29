@@ -1,9 +1,13 @@
 [package]
 name = "fracints_macros"
 version = "0.1.0"
-authors = ["Aaron Kutch <aaronkutch@att.net>"]
-description = "accompanying proc-macro library to `fracints`"
 edition = "2021"
+authors = ["Aaron Kutch <aaronkutch@att.net>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/AaronKutch/fracints"
+documentation = "https://docs.rs/fracints"
+description = "proc-macros reexported by `fracints`"
 publish = false
 
 [lib]

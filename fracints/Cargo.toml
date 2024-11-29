@@ -1,19 +1,20 @@
 [package]
 name = "fracints"
 version = "0.1.0"
-authors = ["Aaron Kutch <aaronkutch@att.net>"]
-description = "Special case fractional-only fixed point numbers"
-readme = "README.md"
-keywords = ["numerics", "math"]
-categories = ["data-structures", "algorithms"]
-# TODO here and in all subcrates
-#license = "MIT OR Apache-2.0"
 edition = "2021"
+authors = ["Aaron Kutch <aaronkutch@att.net>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/AaronKutch/fracints"
+documentation = "https://docs.rs/fracints"
+description = "Special case fractional-only fixed point numbers"
+keywords = ["numerics", "math", "no_std"]
+categories = ["data-structures", "mathematics", "algorithms", "no-std"]
 publish = false
 
 [dependencies]
-fracints_internals = { version = "0.1.0", path = "../fracints_internals" }
-fracints_macros = { version = "0.1.0", path = "../fracints_macros" }
+fracints_internals = { version = "0.1", path = "../fracints_internals" }
+fracints_macros = { version = "0.1", path = "../fracints_macros" }
 rand = { version = "0.8", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 
