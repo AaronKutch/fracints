@@ -7,4 +7,5 @@ mod signed_macro;
 mod signed_macro2;
 mod str_conversion;
 
+pub use awint;
 pub use str_conversion::*;

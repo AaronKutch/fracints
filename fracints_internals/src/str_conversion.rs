@@ -46,28 +46,11 @@ pub enum FracintSerdeError {
 
 // TODO do this in a more optimized way without `awint`
 
-/// Conversion of the internal integer of a fracint to a base 10 string
-pub fn i8_to_string(x: i8) -> String {
-    const TMP: i8 = -i8::MAX;
-    match x {
-        TMP | i8::MIN => return "-1.0".to_string(),
-        0 => return "0.0".to_string(),
-        i8::MAX => return "1.0".to_string(),
-        _ => (),
-    }
-    let sign = x < 0;
-    let x = FP::new(true, InlAwi::from_i8(x), (i8::BITS - 1) as isize).unwrap();
-    let (int, frac) = FP::to_str_general(&x, 10, false, 1, 1, 4096).unwrap();
-    if sign {
-        format!("-{int}.{frac}")
-    } else {
-        format!("{int}.{frac}")
-    }
-}
-
-/// Conversion from a string representation to the internal integer of a
-/// fracint.
-pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
+/// Takes a string and the bitwidth of the result type
+fn common_from_str(
+    s: &str,
+    bw: isize,
+) -> Result<Result<(bool, Awi), awint::SerdeError>, FracintSerdeError> {
     use FracintSerdeError::*;
 
     let sign;
@@ -239,43 +222,72 @@ pub fn i8_from_str(s: &str) -> Result<i8, FracintSerdeError> {
 
     // note we handle the sign ourselves, the sign bit is instead room for ONE and
     // NEG_ONE
-    match Awi::from_bytes_general(
+    Ok(Awi::from_bytes_general(
         None,
         integer,
         fraction,
         exp,
         radix,
-        NonZeroUsize::new(i8::BITS as usize).unwrap(),
-        (i8::BITS - 1) as isize,
-    ) {
-        Ok(awi) => {
-            // ONE and NEG_ONE special cases
-            if awi.msb() {
-                if awi.is_imin() {
-                    if sign {
-                        Ok(-i8::MAX)
-                    } else {
-                        Ok(i8::MAX)
-                    }
-                } else {
-                    Err(Overflow)
-                }
-            } else if sign {
-                Ok(-awi.to_i8())
-            } else {
-                Ok(awi.to_i8())
-            }
-        }
-        _ => Err(Overflow),
-    }
+        NonZeroUsize::new(bw as usize).unwrap(),
+        bw - 1,
+    )
+    .map(|res| (sign, res)))
 }
 
-/*macro_rules! impl_signed_conversions {
-    ($($from_str_radix:ident, $iX:ident);*;) => {$(
-    )*
+macro_rules! impl_signed_conversions {
+($($iX:ident $to_string:ident $from_str:ident $to_iX:ident $from_iX:ident);*;) => {$(
+    /// Conversion of the internal integer of a fracint to a base 10 string
+    pub fn $to_string(x: $iX) -> String {
+        const TMP: $iX = -$iX::MAX;
+        match x {
+            TMP | $iX::MIN => return "-1.0".to_string(),
+            0 => return "0.0".to_string(),
+            $iX::MAX => return "1.0".to_string(),
+            _ => (),
+        }
+        let sign = x < 0;
+        let x = FP::new(true, InlAwi::$from_iX(x), ($iX::BITS - 1) as isize).unwrap();
+        let (int, frac) = FP::to_str_general(&x, 10, false, 1, 1, 4096).unwrap();
+        if sign {
+            format!("-{int}.{frac}")
+        } else {
+            format!("{int}.{frac}")
+        }
     }
+
+    /// Conversion from a string representation to the internal integer of a
+    /// fracint.
+    pub fn $from_str(s: &str) -> Result<$iX, FracintSerdeError> {
+        use FracintSerdeError::*;
+        match common_from_str(s, $iX::BITS as isize)? {
+            Ok((sign, awi)) => {
+                // ONE and NEG_ONE special cases
+                if awi.msb() {
+                    if awi.is_imin() {
+                        if sign {
+                            Ok(-$iX::MAX)
+                        } else {
+                            Ok($iX::MAX)
+                        }
+                    } else {
+                        Err(Overflow)
+                    }
+                } else if sign {
+                    Ok(-awi.$to_iX())
+                } else {
+                    Ok(awi.$to_iX())
+                }
+            }
+            _ => Err(Overflow),
+        }
+    }
+)*}
 }
 
 impl_signed_conversions!(
-    fi8_from_str_radix, i8;
-);*/
+    i8 i8_to_string i8_from_str to_i8 from_i8;
+    i16 i16_to_string i16_from_str to_i16 from_i16;
+    i32 i32_to_string i32_from_str to_i32 from_i32;
+    i64 i64_to_string i64_from_str to_i64 from_i64;
+    i128 i128_to_string i128_from_str to_i128 from_i128;
+);
