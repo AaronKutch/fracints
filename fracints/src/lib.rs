@@ -64,8 +64,10 @@ We need a full_mul free function into some kind of u256 for fi128 energies
 
 mod constants;
 mod impl_signed;
+mod traits;
 
 pub use fracints_internals::FracintSerdeError;
 pub use fracints_macros::*;
+pub use traits::Fracint;
 
 pub use crate::impl_signed::*;

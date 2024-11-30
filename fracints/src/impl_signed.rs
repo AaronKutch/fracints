@@ -16,7 +16,7 @@ use rand::Rng;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::constants::*;
+use crate::{constants::*, Fracint};
 
 macro_rules! impl_signed1 {
     ($(
