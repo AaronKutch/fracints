@@ -6,7 +6,7 @@ macro_rules! impl_fiN_2 {
             ///
             /// # Overflow Behavior
             ///
-            /// `fiN::MIN.full_mul(fiN::MIN)` -> `niY::MIN`, where niY is a normalized
+            /// `fiN::MIN.full_mul(fiN::MIN)` -> `fiM::MIN`, where fiM is a normalized
             /// integer type with double the number of bits of fiN.
             ///
             /// # Examples

@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 use awint::{Awi, InlAwi, FP};
 use thiserror::Error;
 
-// TODO check if thiserror can do docs all in one
+// TODO these docs could probably be at a module level and be more comprehensive
 
 /// The error enum used to specify what parsing error happened when parsing a
 /// fracint.

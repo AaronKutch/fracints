@@ -396,6 +396,9 @@ macro_rules! impl_signed {
         impl FromStr for $ty {
             type Err = FracintSerdeError;
 
+            // TODO have a function for determining max number of chars with respect to
+            // radix
+
             /// Conversion from a string representation.
             ///
             /// The input can start with a '-' to make the output negative. Then it can
@@ -410,8 +413,7 @@ macro_rules! impl_signed {
             /// and exponent parts as long as one term is not all underspaces.
             ///
             /// `s` can be arbitrarily long but significance changes stops after a
-            /// number of chars. TODO this is always constant with respect to
-            /// radix?.
+            /// number of chars.
             ///
             /// The number must be in the range `(-1.0,1.0)` or else an overflow error
             /// is returned. 1.0 is special cased to map to `fiN::ONE' even though

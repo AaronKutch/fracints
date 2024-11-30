@@ -70,8 +70,8 @@ impl_signed!(
         let rhs = rhs as u128;
 
         let (lo, hi) = widening_mul_add_u128(lhs, rhs, 0);
-        // because of the shift, we retain one bit from `lo` TODO see if we could
-        // optimize
+        // because of the shift, we retain one bit from `lo`
+        // TODO see if we could optimize
         let mut res = (hi << 1) | (lo >> 127);
 
         if lhs_msb != rhs_msb {
