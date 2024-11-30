@@ -41,6 +41,8 @@ pub fn checked_sqrt(self) -> Option<Self> {
 }
 */
 
+/// A common trait for a special case of fixed point numbers in the form of all
+/// fractional bits.
 pub trait Fracint:
     Sized
     + Clone

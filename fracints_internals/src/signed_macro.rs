@@ -574,11 +574,9 @@ macro_rules! impl_signed {
         /// # Examples
         ///
         /// ```
-        /// extern crate fracints;
-        /// extern crate rand;
-        /// use rand::Rng;
-        /// #[macro_use]
         /// use fracints::*;
+        /// use rand::Rng;
+        ///
         /// let mut rng = rand::thread_rng();
         /// println!("{}", rng.gen::<fi128>());
         /// ```
