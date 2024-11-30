@@ -469,21 +469,11 @@ macro_rules! impl_signed {
             }
         }
 
-        #[cfg(not(debug_assertions))]
         impl Mul<$iX> for $ty {
             type Output = Self;
 
-            fn mul(self, other: $iX) -> Self::Output {
-                $ty(self.0.wrapping_mul(other))
-            }
-        }
-
-        #[cfg(debug_assertions)]
-        impl Mul<$iX> for $ty {
-            type Output = Self;
-
-            fn mul(self, other: $iX) -> Self::Output {
-                $ty(self.0.checked_mul(other).unwrap())
+            fn mul(self, rhs: $iX) -> Self::Output {
+                self.saturating_mul_int(rhs)
             }
         }
 
@@ -510,9 +500,8 @@ macro_rules! impl_signed {
         impl Div<$iX> for $ty {
             type Output = Self;
 
-            fn div(self, other: $iX) -> Self::Output {
-                // TODO
-                $ty(self.0.checked_div(other).unwrap())
+            fn div(self, rhs: $iX) -> Self::Output {
+                self.saturating_div_int(rhs)
             }
         }
 

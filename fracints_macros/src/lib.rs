@@ -17,7 +17,7 @@ macro_rules! impl_fracint_macros {
                 panic!("The literal input to this macro should not include quotation marks");
             }
         }
-        match i8_from_str(&s) {
+        match $from_str(&s) {
             Ok(x) => format!("{}({})", stringify!($ty), x).parse().unwrap(),
             Err(e) => panic!("Invalid `{}` string representation: {}", stringify!($ty), e,),
         }

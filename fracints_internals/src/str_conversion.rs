@@ -6,15 +6,59 @@ use thiserror::Error;
 // TODO check if thiserror can do docs all in one
 
 /// The error enum used to specify what parsing error happened when parsing a
-/// fracint
+/// fracint.
 ///
-/// TODO
-/// ```todo
-/// use fracints::fi64;
-/// assert_eq!(fi64::from_str(&"-1.0",10).unwrap(), fi64::NEG_ONE);
+/// The input consists of an integer part, optional fraction part, and optional
+/// exponent part. It can have a prefixed '-' to be negative, then a radix other
+/// than 10 can be specified that will apply to the following parts, then the
+/// integer part is specified. The fraction part begins with '.', and the
+/// exponent can be started at the end with 'e' or 'p', and can include a '-' to
+/// be negative. A single rigorous round-to-even is applied after the exponent
+/// is applied, and then bounds are checked. The value "1.0" is special cased to
+/// `fiN::ONE` and "-1" is special cased to `fiN::NEG_ONE`.
 ///
-/// assert_eq!(fi64::from_str(&"0.123456789",10).unwrap(), fi16(4045));
-/// assert_eq!(fi64(4045).to_string(), "0.12344".to_string());
+/// ```
+/// use core::str::FromStr;
+///
+/// use fracints::{fi128, fi64, fi8, Fracint};
+///
+/// assert_eq!(fi64!(1), fi64::ONE);
+/// assert_eq!(fi64!(1.000_000), fi64::ONE);
+/// assert_eq!(fi64!(-1), fi64::NEG_ONE);
+///
+/// // The fraction 1138687895422480281 / 2^63 most closely matches the value of 0.123456789
+/// assert_eq!(fi64!(0.123456789), fi64(1138687895422480281));
+/// assert_eq!(
+///     fi64::ONE.saturating_div_int(3).to_string(),
+///     "0.3333333333333333333"
+/// );
+///
+/// // exponents
+/// assert_eq!(fi64!(0.000123e2), fi64!(0.0123));
+/// assert_eq!(fi64!(123.456e-3), fi64!(0.123456));
+/// assert_eq!(fi64!(42e-7), fi64!(0.0000042));
+///
+/// // extreme precision
+/// assert_eq!(
+///     fi128!(0.636619772367581343075535053490057448137_8),
+///     fi128(108315241484954818046902227470560947936)
+/// );
+/// assert_eq!(
+///     fi128(108315241484954818046902227470560947936).to_string(),
+///     "0.636619772367581343075535053490057448135",
+/// );
+///
+/// // round-to-even example, 1.5 / 128.0 is exactly 0.01171875
+/// assert_eq!(fi8!(0.01171874), fi8(1));
+/// assert_eq!(fi8!(0.01171875), fi8(2));
+///
+/// // Other radixes, note that certain literals currently fail to parse in Rust,
+/// // so the macro unfortunately can't be used.
+/// assert_eq!(fi8::from_str("0b0.1010101").unwrap(), fi8!(0.664));
+/// assert_eq!(
+///     fi64::from_str("-0xbeef.123456_p-5").unwrap(),
+///     fi64!(-0.046614714728434592)
+/// );
 /// ```
 #[derive(Debug, Error, Clone, Copy, PartialEq, Eq)]
 pub enum FracintSerdeError {
@@ -26,7 +70,7 @@ pub enum FracintSerdeError {
     NotAscii,
     #[error("The input did not have an integer part")]
     EmptyInteger,
-    #[error("The integer part can only be '0' or '1'")]
+    #[error("The integer part has a char not in the radix")]
     InvalidCharInInteger,
     #[error(
         "The input does not have a fraction, there should always be a '.' and digits following it"

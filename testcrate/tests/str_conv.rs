@@ -52,6 +52,9 @@ fn from_str() {
         fi128::from_str("0.636619772367581343075535053490057448137_8"),
         Ok(fi128(108315241484954818046902227470560947936))
     );
+
+    assert_eq!(fi64::from_str("-1").unwrap(), fi64::NEG_ONE);
+    assert_eq!(fi64!(-1), fi64::NEG_ONE);
 }
 
 #[test]
