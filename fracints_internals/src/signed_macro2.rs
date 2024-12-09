@@ -1,8 +1,15 @@
 #[macro_export]
-macro_rules! impl_fiN_2 {
+macro_rules! impl_signed_double {
     ($ty:ident, $tyD:ident, $iX:ident, $uX:ident, $iD:ident, $uD:ident, $clo:expr, $chi:expr) => {
         impl $ty {
-            /// Numerically exact multiplication of `self` and `other`
+            /// Returns a half sized
+            pub fn rem_truncate(other: $tyD) -> $ty {
+                $ty((other.0 >> $ty::BITS) as $iX)
+            }
+
+            /// Saturating widening multiplication of `self` and `other`. All inputs
+            /// result in numerically _exact_ outputs, except for
+            /// `fiN::MIN.full_mul(fiN::MIN)` which has to be saturated to `fiM::ONE`.
             ///
             /// # Overflow Behavior
             ///
@@ -11,28 +18,28 @@ macro_rules! impl_fiN_2 {
             ///
             /// # Examples
             ///
-            /// // keep the note on one line
             /// ```
-            /// #[macro_use]
             /// use fracints::*;
             ///
-            /// // note: `from_str_radix` and `to_string_radix` sometimes have small rounding
-            /// // errors when converting
-            /// // and displaying, but the `full_mul` on the fiN between those functions is
-            /// // truly exact.
+            /// // note: `from_str` and `to_string` sometimes have small
+            /// // round-to-even errors when converting and displaying, but
+            /// // the `full_mul` between those functions is truly exact.
             /// assert_eq!(
-            ///     fi32::from_str_radix(&"0.123456789", 10)
-            ///         .unwrap()
-            ///         .wrapping_full_mul(fi32::from_str_radix(&"0.123456789", 10).unwrap())
-            ///         .to_string_radix(10),
-            ///     "0.01524157879479210234".to_string()
+            ///     fi32!(0.123456789)
+            ///         .wrapping_full_mul(fi32!(0.123456789))
+            ///         .to_string(),
+            ///     "0.01524157879479210234"
             /// );
             ///
-            /// // overflow corner case
+            /// // the only overflow corner case
             /// assert_eq!(fi32::MIN.wrapping_full_mul(fi32::MIN), fi64::MIN);
             /// ```
-            pub fn wrapping_full_mul(self, other: Self) -> $tyD {
-                $tyD(($iD::from(self.0) * $iD::from(other.0)) << 1)
+            pub fn saturating_widening_mul(self, rhs: Self) -> $tyD {
+                if (self == Self::MIN) && (rhs == Self::MIN) {
+                    Self::MAX
+                } else {
+                    $tyD(($iD::from(self.0).wrapping_mul($iD::from(other.0))) << 1)
+                }
             }
 
             /// Division of `self` and `other`, which returns a integer representing a
@@ -91,14 +98,12 @@ macro_rules! impl_fiN_2 {
                 }
             }
 
-            pub fn from_truncated(other: $tyD) -> $ty {
-                $ty((other.0 >> $ushift) as $iX)
-            }
+            /*
 
             pub fn cos_sin_pi(self) -> ($ty, $ty) {
                 let (x, y) = $tyD::from(self).cos_sin_pi_taylor();
                 ($ty::from_rounded(x), $ty::from_rounded(y))
-            }
+            }*/
 
             /*/// Calculates `sin((2pi/4) * theta)`
             /// The max error is 0.5 ULPs from the true value
@@ -196,13 +201,10 @@ macro_rules! impl_fiN_2 {
                     }
                 }*/
 
-        /// Lossless and unfailing conversion of a fracint to one with double the number
-        /// of bits. There is not a conversion the other way to stay consistent with the
-        /// primitives and to avoid rounding error. Use TODO for truncation and TODO for
-        /// rounding
         impl From<$ty> for $tyD {
+            /// Lossless conversion
             fn from(x: $ty) -> Self {
-                $tyD($iD::from(x.0) << $ushift)
+                $tyD($iD::from(x.0) << $ty::BITS)
             }
         }
     };

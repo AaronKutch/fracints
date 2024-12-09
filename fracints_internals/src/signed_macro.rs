@@ -181,6 +181,7 @@ macro_rules! impl_signed {
         }
 
         impl $ty {
+            /// This is a slower
             /// Intended to only be called for `-0.5 <= self <= 0.5`. This function has
             /// overflows outside of this range.
             fn cos_taudiv4_taylor_base(self) -> $ty {
@@ -192,9 +193,10 @@ macro_rules! impl_signed {
                 // + x^8 / ( (4/tau)^8 * 8! )
                 // - ...
 
-                let cutoff = (self.0 as $uX) >> ($ty::BITS / 2);
-                if cutoff == 0 || cutoff == ($uX::MAX >> ($ty::BITS / 2)) {
-                    return $ty::ONE;
+                // rounding to one and preventing overflow
+                let cutoff = (self.0 as $uX) >> (Self::BITS / 2);
+                if cutoff == 0 || cutoff == ($uX::MAX >> (Self::BITS / 2)) {
+                    return Self::ONE;
                 }
 
                 let theta_sqr = self * self;
