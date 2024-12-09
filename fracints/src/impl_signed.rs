@@ -16,7 +16,7 @@ use rand::Rng;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{constants::*, Fracint};
+use crate::{constants::*, Fracint, FracintDouble, FracintHalf};
 
 macro_rules! impl_signed1 {
     ($(
@@ -109,3 +109,8 @@ impl_signed!(
     },
     CONST128
 );
+
+impl_signed_double!(fi8, fi16, i8, u8, i16, u16);
+impl_signed_double!(fi16, fi32, i16, u16, i32, u32);
+impl_signed_double!(fi32, fi64, i32, u32, i64, u64);
+impl_signed_double!(fi64, fi128, i64, u64, i128, u128);

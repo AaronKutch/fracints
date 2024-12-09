@@ -264,3 +264,46 @@ pub trait Fracint:
     /// - if `self == fiN::MIN` and `rhs == -1`, `Self::ONE` is returned
     fn saturating_div_int(self, rhs: Self::Int) -> Self;
 }
+
+pub trait FracintDouble: Fracint {
+    /// The double-sized version of `Self`
+    type Double: Fracint;
+
+    /// Saturating widening multiplication of `self` and `other`. All inputs
+    /// result in numerically _exact_ outputs, except for
+    /// `fiN::MIN.full_mul(fiN::MIN)` which has to be saturated to `fiM::ONE`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use fracints::*;
+    ///
+    /// // note: `from_str` and `to_string` sometimes have small
+    /// // round-to-even errors when converting and displaying, but
+    /// // the `full_mul` between those functions is truly exact
+    /// // (except for the corner case).
+    /// assert_eq!(
+    ///     fi32!(0.123456789)
+    ///         .saturating_widening_mul(fi32!(0.123456789))
+    ///         .to_string(),
+    ///     "0.0152415787947921023"
+    /// );
+    ///
+    /// // the only overflow corner case
+    /// assert_eq!(fi32::MIN.saturating_widening_mul(fi32::MIN), fi64::ONE);
+    /// ```
+    fn saturating_widening_mul(self, rhs: Self) -> Self::Double;
+}
+
+pub trait FracintHalf: Fracint + From<Self::Half> {
+    /// The half-sized version of `Self`
+    type Half: Fracint;
+
+    /// Returns half sized low and high parts. The high part is effectively a
+    /// truncated version of `self`, and the low part is the remainder.
+    fn split(self) -> (Self::Half, Self::Half);
+
+    /// Truncates `self` down to a half sized type with the same value except
+    /// with less than 1 ULP of error.
+    fn truncate(self) -> Self::Half;
+}

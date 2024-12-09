@@ -10,6 +10,6 @@ mod traits;
 
 pub use fracints_internals::FracintSerdeError;
 pub use fracints_macros::*;
-pub use traits::Fracint;
+pub use traits::*;
 
 pub use crate::impl_signed::*;
