@@ -181,6 +181,8 @@ macro_rules! impl_signed {
         }
 
         impl $ty {
+            // TODO
+            /*
             /// This is a slower
             /// Intended to only be called for `-0.5 <= self <= 0.5`. This function has
             /// overflows outside of this range.
@@ -382,6 +384,7 @@ macro_rules! impl_signed {
                     }
                 }
             }
+            */
         }
 
         impl fmt::Display for $ty {

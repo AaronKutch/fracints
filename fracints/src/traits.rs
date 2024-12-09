@@ -7,40 +7,6 @@ use core::{
 
 // TODO decide on how `to_string_general` should work
 
-// TODO
-/*
-/// Computes the square root of `self.saturating_abs()`
-pub fn saturating_abs_sqrt(&self) -> Self {
-    let half_x = *self >> 1;
-    let prev_conv = self;
-    let conv = (*self >> 1) + ($ty::ONE >> 1);
-    while (conv - prev_conv).abs() < ___ {
-        conv = (conv >> 1) + self.wrapping_div(conv);
-    }
-}
-
-//
-/// Wrapping square root.
-///
-/// # Panics
-///
-/// If `self.is_negative` then the function panics.
-pub fn wrapping_sqrt(&self) -> Self {}
-
-/// Returns a tuple of `self.wrapping_sqrt(other)` along with a boolean indicating
-/// whether an overflow happened.
-pub fn overflowing_sqrt(&self) -> Self {}
-
-/// Same as `overflowing_sqrt` except it returns an `Option<fiN>`, where `Some(fiN)`
-/// means no overflow and `None` means overflow.
-pub fn checked_sqrt(self) -> Option<Self> {
-    match self.overflowing_sqrt() {
-        (x, false) => Some(x),
-        (_, true) => None,
-    }
-}
-*/
-
 /// A common trait for a special case of fixed point numbers in the form of all
 /// fractional bits.
 pub trait Fracint:
