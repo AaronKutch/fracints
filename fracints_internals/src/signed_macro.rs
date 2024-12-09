@@ -182,6 +182,14 @@ macro_rules! impl_signed {
 
         impl $ty {
             // TODO
+            pub fn _todo() {
+                dbg!(
+                    $c.num_4divtau,
+                    $c.num_4divtau_sqr,
+                    $c.cos_taylor_iters,
+                    $c.sin_taylor_iters
+                );
+            }
             /*
             /// This is a slower
             /// Intended to only be called for `-0.5 <= self <= 0.5`. This function has
