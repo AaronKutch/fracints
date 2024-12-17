@@ -178,6 +178,29 @@ macro_rules! impl_signed {
                     Self(self.0.wrapping_div(rhs))
                 }
             }
+
+            /// Generates a random fracint from the given entropy.
+            /// Note: if `fiN::MIN` is generated, `fiN::ZERO` is returned instead
+            ///
+            /// # Examples
+            ///
+            /// ```
+            /// use fracints::*;
+            ///
+            /// let mut rng = rand::thread_rng();
+            /// println!("{}", fi128::rand(&mut rng).unwrap());
+            /// ```
+            #[cfg(feature = "rand_support")]
+            fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Result<Self, rand_core::Error> {
+                let mut dst = Self::ZERO.0.to_le_bytes();
+                rng.try_fill_bytes(&mut dst)?;
+                let x = Self(Self::Int::from_le_bytes(dst));
+                if x == Self::MIN {
+                    Ok(Self::ZERO)
+                } else {
+                    Ok(x)
+                }
+            }
         }
 
         impl $ty {
@@ -581,29 +604,6 @@ macro_rules! impl_signed {
                 I: Iterator<Item = &'a Self>,
             {
                 iter.fold(Self::ONE, |acc, elem| acc * *elem)
-            }
-        }
-
-        /// N.B.: if `fiN::MIN` is generated, `fiN::ZERO` is returned instead
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use fracints::*;
-        /// use rand::Rng;
-        ///
-        /// let mut rng = rand::thread_rng();
-        /// println!("{}", rng.gen::<fi128>());
-        /// ```
-        #[cfg(feature = "rand")]
-        impl rand::distributions::Distribution<$ty> for rand::distributions::Standard {
-            fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $ty {
-                let x = $ty(rng.gen());
-                if x == $ty::MIN {
-                    $ty::ZERO
-                } else {
-                    x
-                }
             }
         }
     };

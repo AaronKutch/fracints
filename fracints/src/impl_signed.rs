@@ -11,8 +11,6 @@ use core::{
 
 use awint::awint_internals::{dd_division_u256, widening_mul_add_u128};
 use fracints_internals::{impl_signed, *};
-#[cfg(feature = "rand")]
-use rand::Rng;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

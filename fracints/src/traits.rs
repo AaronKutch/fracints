@@ -229,6 +229,9 @@ pub trait Fracint:
     /// - if `rhs == fiN::ZERO`, `self.signum()` is returned
     /// - if `self == fiN::MIN` and `rhs == -1`, `Self::ONE` is returned
     fn saturating_div_int(self, rhs: Self::Int) -> Self;
+
+    #[cfg(feature = "rand_support")]
+    fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Result<Self, rand_core::Error>;
 }
 
 pub trait FracintDouble: Fracint {
