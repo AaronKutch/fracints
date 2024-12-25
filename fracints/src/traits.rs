@@ -21,17 +21,24 @@ pub trait Fracint:
     + fmt::Display
     + fmt::Debug
     + FromStr
-    + Neg
-    + Add
+    + Neg<Output = Self>
+    + Add<Output = Self>
     + AddAssign
-    + Sub
+    + Sub<Output = Self>
     + SubAssign
-    + Mul
+    + Mul<Output = Self>
     + MulAssign
-    + Div
+    + Div<Output = Self>
     + DivAssign
-    + Shl<usize>
-    + Shr<usize>
+    + Shl<usize, Output = Self>
+    + Shr<usize, Output = Self>
+    + Not<Output = Self>
+    + BitOr<Output = Self>
+    + BitOrAssign
+    + BitAnd<Output = Self>
+    + BitAndAssign
+    + BitXor<Output = Self>
+    + BitXorAssign
     + Sum
     + Product
 {
@@ -58,6 +65,8 @@ pub trait Fracint:
     const ULP: Self;
     /// Zero.
     const ZERO: Self;
+    /// If this type is signed
+    const SIGNED: bool;
 
     fn is_negative(self) -> bool;
     fn is_positive(self) -> bool;

@@ -13,3 +13,9 @@ pub use fracints_macros::*;
 pub use traits::*;
 
 pub use crate::impl_signed::*;
+
+pub mod prelude {
+    pub use fracints_macros::*;
+
+    pub use crate::{impl_signed::*, traits::*};
+}

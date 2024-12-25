@@ -13,7 +13,7 @@ macro_rules! impl_signed {
     ) => {
         #[allow(non_camel_case_types)]
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct $ty(pub $iX);
 
         impl Fracint for $ty {
@@ -24,6 +24,7 @@ macro_rules! impl_signed {
             const MIN: Self = Self($iX::MIN);
             const NEG_ONE: Self = Self(-$iX::MAX);
             const ONE: Self = Self($iX::MAX);
+            const SIGNED: bool = true;
             const ULP: Self = Self(1);
             const ZERO: Self = Self(0);
 
@@ -418,6 +419,17 @@ macro_rules! impl_signed {
             */
         }
 
+        impl fmt::Debug for $ty {
+            /// Converts to a base 10 string representation
+            ///
+            /// `fiN::ONE` and `fiN::NEG_ONE` are special cased to "1.0" and "-1.0"
+            /// respectively.
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                // TODO use constant sized buffers
+                write!(f, "{}({})", stringify!($ty), $to_string(self.0))
+            }
+        }
+
         impl fmt::Display for $ty {
             /// Converts to a base 10 string representation
             ///
@@ -568,6 +580,56 @@ macro_rules! impl_signed {
 
             fn shl(self, rhs: usize) -> Self {
                 $ty(self.0 << rhs)
+            }
+        }
+
+        impl Not for $ty {
+            type Output = Self;
+
+            fn not(self) -> Self {
+                $ty(!self.0)
+            }
+        }
+
+        impl BitOr for $ty {
+            type Output = Self;
+
+            fn bitor(self, rhs: Self) -> Self {
+                $ty(self.0 | rhs.0)
+            }
+        }
+
+        impl BitAnd for $ty {
+            type Output = Self;
+
+            fn bitand(self, rhs: Self) -> Self {
+                $ty(self.0 & rhs.0)
+            }
+        }
+
+        impl BitXor for $ty {
+            type Output = Self;
+
+            fn bitxor(self, rhs: Self) -> Self {
+                $ty(self.0 ^ rhs.0)
+            }
+        }
+
+        impl BitOrAssign for $ty {
+            fn bitor_assign(&mut self, rhs: Self) {
+                *self = *self | rhs;
+            }
+        }
+
+        impl BitAndAssign for $ty {
+            fn bitand_assign(&mut self, rhs: Self) {
+                *self = *self & rhs;
+            }
+        }
+
+        impl BitXorAssign for $ty {
+            fn bitxor_assign(&mut self, rhs: Self) {
+                *self = *self ^ rhs;
             }
         }
 

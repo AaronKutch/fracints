@@ -3,9 +3,13 @@ use std::fmt::Debug;
 use star_rng::StarRng;
 
 pub trait Optimizeable: Debug + Clone {
+    type Temperature;
+
     fn create_rand(rng: &mut StarRng) -> Self;
 
     fn cost(&self) -> u128;
+
+    fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature);
 }
 
 pub struct RampOptimize<O: Optimizeable> {
