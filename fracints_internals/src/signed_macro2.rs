@@ -4,6 +4,10 @@ macro_rules! impl_signed_double {
         impl FracintDouble for $ty {
             type Double = $tyD;
 
+            fn widen(self) -> $tyD {
+                $tyD($iD::from(self.0) << $ty::BITS)
+            }
+
             fn saturating_widening_mul(self, rhs: Self) -> $tyD {
                 if (self == Self::MIN) && (rhs == Self::MIN) {
                     $tyD::MAX

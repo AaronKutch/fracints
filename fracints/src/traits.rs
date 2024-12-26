@@ -31,7 +31,9 @@ pub trait Fracint:
     + Div<Output = Self>
     + DivAssign
     + Shl<usize, Output = Self>
+    + ShlAssign<usize>
     + Shr<usize, Output = Self>
+    + ShrAssign<usize>
     + Not<Output = Self>
     + BitOr<Output = Self>
     + BitOrAssign
@@ -73,8 +75,15 @@ pub trait Fracint:
     /// Casts to the `Self::Int` type
     fn as_int(self) -> Self::Int;
 
-    fn is_negative(self) -> bool;
-    fn is_positive(self) -> bool;
+    fn is_zero(self) -> bool {
+        self == Self::ZERO
+    }
+    fn is_negative(self) -> bool {
+        self < Self::ZERO
+    }
+    fn is_positive(self) -> bool {
+        self >= Self::ZERO
+    }
 
     /// Returns a value representing the sign of `self`.
     ///
@@ -246,11 +255,46 @@ pub trait Fracint:
 
     #[cfg(feature = "rand_support")]
     fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Result<Self, rand_core::Error>;
+
+    /// Slow way of calculating the truncated square root using bisection. This
+    /// will always underestimate the square root, with about as much bit error
+    /// as the number of leading zero bits.
+    fn sqrt_simple_bisection(self) -> Self {
+        let mut set_bit = if Self::SIGNED {
+            Self::ULP << (Self::BITS - 2)
+        } else {
+            Self::ULP << (Self::BITS - 1)
+        };
+        let mut res = Self::ZERO;
+        let mut prev_sqr = Self::ZERO;
+        loop {
+            if set_bit.is_zero() {
+                break res
+            }
+            let test = res | set_bit;
+            let sqr = test.saturating_mul(test);
+            if sqr <= self {
+                res = test;
+                if sqr == self {
+                    break res
+                }
+            }
+            if sqr == prev_sqr {
+                // we have reached a point where the set bit no longer contributes
+                break res
+            }
+            prev_sqr = sqr;
+            set_bit >>= 1;
+        }
+    }
 }
 
 pub trait FracintDouble: Fracint {
     /// The double-sized version of `Self`
-    type Double: Fracint;
+    type Double: Fracint + FracintHalf<Half = Self>;
+
+    /// Widens `self` by extending with zero bits
+    fn widen(self) -> Self::Double;
 
     /// Saturating widening multiplication of `self` and `other`. All inputs
     /// result in numerically _exact_ outputs, except for
@@ -276,11 +320,17 @@ pub trait FracintDouble: Fracint {
     /// assert_eq!(fi32::MIN.saturating_widening_mul(fi32::MIN), fi64::ONE);
     /// ```
     fn saturating_widening_mul(self, rhs: Self) -> Self::Double;
+
+    /// This calculates a nearly exact truncated square root using bisection
+    /// with a larger type
+    fn sqrt_slow(self) -> Self {
+        self.widen().sqrt_simple_bisection().truncate()
+    }
 }
 
 pub trait FracintHalf: Fracint + From<Self::Half> {
     /// The half-sized version of `Self`
-    type Half: Fracint;
+    type Half: Fracint + FracintDouble<Double = Self>;
 
     /// Returns half sized low and high parts. The high part is effectively a
     /// truncated version of `self`, and the low part is the remainder.

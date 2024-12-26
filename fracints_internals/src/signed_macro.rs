@@ -38,14 +38,6 @@ macro_rules! impl_signed {
                 self.0
             }
 
-            fn is_negative(self) -> bool {
-                self < Self::ZERO
-            }
-
-            fn is_positive(self) -> bool {
-                self >= Self::ZERO
-            }
-
             fn signum(self) -> Self {
                 if self < Self::ZERO {
                     Self::NEG_ONE
@@ -577,6 +569,20 @@ macro_rules! impl_signed {
             }
         }
 
+        impl Shl<usize> for $ty {
+            type Output = Self;
+
+            fn shl(self, rhs: usize) -> Self {
+                $ty(self.0 << rhs)
+            }
+        }
+
+        impl ShlAssign<usize> for $ty {
+            fn shl_assign(&mut self, rhs: usize) {
+                self.0 <<= rhs
+            }
+        }
+
         impl Shr<usize> for $ty {
             type Output = Self;
 
@@ -585,11 +591,9 @@ macro_rules! impl_signed {
             }
         }
 
-        impl Shl<usize> for $ty {
-            type Output = Self;
-
-            fn shl(self, rhs: usize) -> Self {
-                $ty(self.0 << rhs)
+        impl ShrAssign<usize> for $ty {
+            fn shr_assign(&mut self, rhs: usize) {
+                self.0 >>= rhs
             }
         }
 
@@ -609,6 +613,12 @@ macro_rules! impl_signed {
             }
         }
 
+        impl BitOrAssign for $ty {
+            fn bitor_assign(&mut self, rhs: Self) {
+                *self = *self | rhs;
+            }
+        }
+
         impl BitAnd for $ty {
             type Output = Self;
 
@@ -617,23 +627,17 @@ macro_rules! impl_signed {
             }
         }
 
+        impl BitAndAssign for $ty {
+            fn bitand_assign(&mut self, rhs: Self) {
+                *self = *self & rhs;
+            }
+        }
+
         impl BitXor for $ty {
             type Output = Self;
 
             fn bitxor(self, rhs: Self) -> Self {
                 $ty(self.0 ^ rhs.0)
-            }
-        }
-
-        impl BitOrAssign for $ty {
-            fn bitor_assign(&mut self, rhs: Self) {
-                *self = *self | rhs;
-            }
-        }
-
-        impl BitAndAssign for $ty {
-            fn bitand_assign(&mut self, rhs: Self) {
-                *self = *self & rhs;
             }
         }
 
