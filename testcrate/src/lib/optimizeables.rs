@@ -73,12 +73,12 @@ impl<F: Fracint> Poly2<F> {
 // TODO for a more serious implementation we would be using unsigned fracints
 // and some offset translation
 
-///pub  Optimizes for y = sqrt(x) in a range `c..=d`
+///pub  Optimizes for y = sqrt(x) in a range `start..=end`
 #[derive(Debug, Clone)]
 pub struct Sqrt<F: Fracint> {
     pub poly2: Poly2<F>,
-    pub c: F,
-    pub d: F,
+    pub start: F,
+    pub end: F,
     pub n: F::Int,
 }
 
@@ -113,16 +113,16 @@ impl<F: Fracint> Optimizeable for Sqrt<F> {
 
     fn cost(&self) -> u128 {
         let mut res = 0u128;
-        let step = (self.d - self.c).saturating_div_int(self.n);
+        let step = (self.end - self.start).saturating_div_int(self.n);
         let n: u128 = self.n.try_into().unwrap();
-        let mut x = self.c;
+        let mut x = self.start;
         for _ in 0..n {
             res = res.saturating_add(self.error(x));
             x += step;
         }
         // for the last one, make sure we get the max value (the division for `step`
         // truncates) so that our optimizer disfavors overflow edge cases
-        res = res.saturating_add(self.error(self.d));
+        res = res.saturating_add(self.error(self.end));
         res
     }
 
