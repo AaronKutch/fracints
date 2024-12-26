@@ -1,5 +1,3 @@
-use std::u128;
-
 use fracints::Fracint;
 use star_rng::StarRng;
 
