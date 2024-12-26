@@ -30,41 +30,73 @@ pub fn mutate_fracint<F: Fracint>(f: &mut F, rng: &mut StarRng, temp: &FracintTe
 }
 
 #[derive(Debug, Clone)]
-pub struct Poly2<F: Fracint> {
-    pub a0: F,
-    pub a1: F,
-    pub a2: F,
+pub struct Poly<F: Fracint> {
+    pub a: Vec<F>,
 }
 
-impl<F: Fracint> Poly2<F> {
-    pub fn zero() -> Self {
+impl<F: Fracint> Poly<F> {
+    pub fn zero(n: usize) -> Self {
         Self {
-            a0: F::ZERO,
-            a1: F::ZERO,
-            a2: F::ZERO,
+            a: vec![F::ZERO; n],
         }
     }
 
-    pub fn rand(rng: &mut StarRng) -> Self {
+    pub fn rand(n: usize, rng: &mut StarRng) -> Self {
+        let mut a = vec![];
+        for _ in 0..n {
+            a.push(F::rand(rng).unwrap());
+        }
+        Self { a }
+    }
+
+    pub fn eval(&self, t: F) -> F {
+        let mut add = F::ZERO;
+        let mut mul = t;
+        for i in 0..self.a.len() {
+            if i == 0 {
+                // avoid F::ONE multiplication error
+                add = add.wrapping_add(self.a[i]);
+            } else {
+                add = add.wrapping_add(self.a[i].saturating_mul(mul));
+                mul = mul.saturating_mul(t);
+            }
+        }
+        add
+    }
+
+    pub fn mutate(&mut self, rng: &mut StarRng, temp: &FracintTemperature) {
+        if let Some(x) = rng.index_slice_mut(&mut self.a) {
+            mutate_fracint(x, rng, temp)
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Rational<F: Fracint> {
+    pub num: Poly<F>,
+    pub den: Poly<F>,
+}
+
+impl<F: Fracint> Rational<F> {
+    pub fn zero(n_num: usize, n_den: usize) -> Self {
         Self {
-            a0: F::rand(rng).unwrap(),
-            a1: F::rand(rng).unwrap(),
-            a2: F::rand(rng).unwrap(),
+            num: Poly::zero(n_num),
+            den: Poly::zero(n_den),
         }
     }
 
     pub fn eval(&self, t: F) -> F {
-        let mut res = self.a0;
-        res = res.wrapping_add(self.a1.saturating_mul(t));
-        res = res.wrapping_add(self.a2.saturating_mul(t.saturating_mul(t)));
-        res
+        if self.den.a.is_empty() {
+            self.num.eval(t)
+        } else {
+            self.num.eval(t).saturating_div(self.den.eval(t))
+        }
     }
 
     pub fn mutate(&mut self, rng: &mut StarRng, temp: &FracintTemperature) {
-        match rng.index(3).unwrap() {
-            0 => mutate_fracint(&mut self.a0, rng, temp),
-            1 => mutate_fracint(&mut self.a1, rng, temp),
-            2 => mutate_fracint(&mut self.a2, rng, temp),
+        match rng.index(2).unwrap() {
+            0 => self.num.mutate(rng, temp),
+            1 => self.den.mutate(rng, temp),
             _ => unreachable!(),
         }
     }
@@ -73,10 +105,10 @@ impl<F: Fracint> Poly2<F> {
 // TODO for a more serious implementation we would be using unsigned fracints
 // and some offset translation
 
-///pub  Optimizes for y = sqrt(x) in a range `start..=end`
+/// Optimizes for y = sqrt(x) in a range `start..=end`
 #[derive(Debug, Clone)]
 pub struct Sqrt<F: Fracint> {
-    pub poly2: Poly2<F>,
+    pub rational: Rational<F>,
     pub start: F,
     pub end: F,
     pub n: F::Int,
@@ -84,7 +116,7 @@ pub struct Sqrt<F: Fracint> {
 
 impl<F: Fracint> Sqrt<F> {
     pub fn eval(&self, x: F) -> F {
-        self.poly2.eval(x)
+        self.rational.eval(x)
     }
 
     /// calculates the expected inverse x = y^2
@@ -127,6 +159,6 @@ impl<F: Fracint> Optimizeable for Sqrt<F> {
     }
 
     fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature) {
-        self.poly2.mutate(rng, temp);
+        self.rational.mutate(rng, temp);
     }
 }
