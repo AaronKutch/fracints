@@ -1,5 +1,9 @@
+use std::u128;
+
 use fracints::Fracint;
 use star_rng::StarRng;
+
+use crate::Optimizeable;
 
 // typically I would go for bit flipping, bit this is important for switching
 // between small positives and negatives
@@ -60,16 +64,60 @@ impl<F: Fracint> Poly2<F> {
     }
 }
 
-/*impl<F: Fracint> Optimizeable for Poly2<F> {
-    type Temperature = FracintTemperature;
+// TODO for a more serious implementation we would be using unsigned fracints
+// and some offset translation
 
-    fn create_rand(rng: &mut StarRng) -> Self {
+///pub  Optimizes for y = sqrt(x) in a range `c..=d`
+#[derive(Debug, Clone)]
+pub struct Sqrt<F: Fracint> {
+    pub poly2: Poly2<F>,
+    pub c: F,
+    pub d: F,
+    pub n: F::Int,
+}
+
+impl<F: Fracint> Sqrt<F> {
+    pub fn eval(&self, x: F) -> F {
+        self.poly2.eval(x)
     }
 
+    /// calculates the expected inverse x = y^2
+    pub fn expected_inv(&self, y: F) -> F {
+        y.saturating_mul(y)
+    }
+
+    /// Calculates an error from the expected value
+    pub fn error(&self, x: F) -> u128 {
+        let y = self.eval(x);
+        let x1 = self.expected_inv(y);
+        let diff: F = if x < x1 {
+            x1.saturating_sub(x)
+        } else {
+            x.saturating_sub(x1)
+        };
+        diff.as_int().try_into().unwrap_or(u128::MAX)
+    }
+}
+
+impl<F: Fracint> Optimizeable for Sqrt<F> {
+    type Temperature = FracintTemperature;
+
     fn cost(&self) -> u128 {
-        todo!()
+        let mut res = 0;
+        let step = (self.d - self.c).saturating_div_int(self.n);
+        let n: u128 = self.n.try_into().unwrap();
+        let mut x = self.c;
+        for _ in 0..n {
+            res += self.error(x);
+            x += step;
+        }
+        // for the last one, make sure we get the max value (the division for `step`
+        // truncates) so that our optimizer disfavors overflow edge cases
+        res += self.error(self.d);
+        res
     }
 
     fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature) {
+        self.poly2.mutate(rng, temp);
     }
-}*/
+}

@@ -5,8 +5,6 @@ use star_rng::StarRng;
 pub trait Optimizeable: Debug + Clone {
     type Temperature;
 
-    fn create_rand(rng: &mut StarRng) -> Self;
-
     fn cost(&self) -> u128;
 
     fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature);
@@ -27,7 +25,7 @@ impl<O: Optimizeable> Debug for RampOptimize<O> {
 }
 
 impl<O: Optimizeable> RampOptimize<O> {
-    pub fn new(rng_seed: u64, population: usize) -> Option<Self> {
+    pub fn new(init: O, rng_seed: u64, population: usize) -> Option<Self> {
         if population == 0 {
             None
         } else {
@@ -36,7 +34,7 @@ impl<O: Optimizeable> RampOptimize<O> {
                 beam: vec![],
             };
             for _ in 0..population {
-                res.beam.push((u128::MAX, O::create_rand(&mut res.rng)));
+                res.beam.push((u128::MAX, init.clone()));
             }
             Some(res)
         }

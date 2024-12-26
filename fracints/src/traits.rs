@@ -42,7 +42,7 @@ pub trait Fracint:
     + Sum
     + Product
 {
-    type Int: Sized + Clone + Copy;
+    type Int: Sized + Clone + Copy + TryInto<u128, Error: fmt::Debug> + fmt::Debug;
 
     /// The number of bits in this type
     const BITS: usize;
@@ -67,6 +67,11 @@ pub trait Fracint:
     const ZERO: Self;
     /// If this type is signed
     const SIGNED: bool;
+
+    /// Casts from the `Self::Int` type
+    fn from_int(x: Self::Int) -> Self;
+    /// Casts to the `Self::Int` type
+    fn as_int(self) -> Self::Int;
 
     fn is_negative(self) -> bool;
     fn is_positive(self) -> bool;

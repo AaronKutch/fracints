@@ -11,6 +11,8 @@ macro_rules! impl_signed {
         $normalized_div:expr,
         $c:expr
     ) => {
+        // TODO make inner type private, not doing this currently because we need const
+        // traits
         #[allow(non_camel_case_types)]
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -27,6 +29,14 @@ macro_rules! impl_signed {
             const SIGNED: bool = true;
             const ULP: Self = Self(1);
             const ZERO: Self = Self(0);
+
+            fn from_int(x: Self::Int) -> Self {
+                Self(x)
+            }
+
+            fn as_int(self) -> Self::Int {
+                self.0
+            }
 
             fn is_negative(self) -> bool {
                 self < Self::ZERO
