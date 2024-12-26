@@ -39,6 +39,14 @@ pub struct Poly2<F: Fracint> {
 }
 
 impl<F: Fracint> Poly2<F> {
+    pub fn zero() -> Self {
+        Self {
+            a0: F::ZERO,
+            a1: F::ZERO,
+            a2: F::ZERO,
+        }
+    }
+
     pub fn rand(rng: &mut StarRng) -> Self {
         Self {
             a0: F::rand(rng).unwrap(),
@@ -89,6 +97,9 @@ impl<F: Fracint> Sqrt<F> {
     /// Calculates an error from the expected value
     pub fn error(&self, x: F) -> u128 {
         let y = self.eval(x);
+        if y < F::ZERO {
+            return u128::MAX;
+        }
         let x1 = self.expected_inv(y);
         let diff: F = if x < x1 {
             x1.saturating_sub(x)
@@ -103,17 +114,17 @@ impl<F: Fracint> Optimizeable for Sqrt<F> {
     type Temperature = FracintTemperature;
 
     fn cost(&self) -> u128 {
-        let mut res = 0;
+        let mut res = 0u128;
         let step = (self.d - self.c).saturating_div_int(self.n);
         let n: u128 = self.n.try_into().unwrap();
         let mut x = self.c;
         for _ in 0..n {
-            res += self.error(x);
+            res = res.saturating_add(self.error(x));
             x += step;
         }
         // for the last one, make sure we get the max value (the division for `step`
         // truncates) so that our optimizer disfavors overflow edge cases
-        res += self.error(self.d);
+        res = res.saturating_add(self.error(self.d));
         res
     }
 
