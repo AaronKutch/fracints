@@ -2,8 +2,8 @@ use common::{FracintTemperature, Optimizeable, RampOptimize, Rational, Sqrt};
 use fracints::prelude::*;
 
 fn main() {
-    let seed = 0;
-    let start = fi64!(0.5);
+    let seed = 1;
+    let start = fi64!(0.25);
     let end = fi64!(1.0);
     let init = Sqrt {
         rational: Rational::zero(3, 0),

@@ -90,14 +90,28 @@ pub trait Fracint:
     /// - `fiN::NEG_ONE` if the value is negative
     /// - `fiN::ZERO` if the value is zero
     /// - `fiN::ONE` if the value is positive
-    fn signum(self) -> Self;
+    fn signum(self) -> Self {
+        if self < Self::ZERO {
+            Self::NEG_ONE
+        } else if self == Self::ZERO {
+            Self::ZERO
+        } else {
+            Self::ONE
+        }
+    }
 
     /// Wrapping absolute value of `self`.
     ///
     /// # Overflow behavior
     ///
     /// `Self::MIN.abs()` -> `Self::MIN`
-    fn wrapping_abs(self) -> Self;
+    fn wrapping_abs(self) -> Self {
+        if self.is_negative() {
+            self.wrapping_neg()
+        } else {
+            self
+        }
+    }
 
     /// Returns a tuple of `self.wrapping_abs()` along with a boolean indicating
     /// whether an overflow happened.
@@ -113,7 +127,9 @@ pub trait Fracint:
 
     /// Saturating absolute value of `self`. It behaves the same way as
     /// `wrapping_abs` except `Self::MIN.saturating_abs()` -> `Self::ONE`
-    fn saturating_abs(self) -> Self;
+    fn saturating_abs(self) -> Self {
+        self.checked_abs().unwrap_or(Self::ONE)
+    }
 
     /// Wrapping negation of `self`.
     ///

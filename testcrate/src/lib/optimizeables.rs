@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use fracints::Fracint;
 use star_rng::StarRng;
 
@@ -130,13 +132,11 @@ impl<F: Fracint> Sqrt<F> {
         if y < F::ZERO {
             return u128::MAX;
         }
-        let x1 = self.expected_inv(y);
-        let diff: F = if x < x1 {
-            x1.saturating_sub(x)
-        } else {
-            x.saturating_sub(x1)
-        };
-        diff.as_int().try_into().unwrap_or(u128::MAX)
+        // TODO we should be able to move the more accurate `sqrt_slow` to `Fracint`
+        let expected_y = x.sqrt_simple_bisection();
+        expected_y.saturating_sub(y).saturating_abs().as_int().try_into().unwrap_or(u128::MAX)
+        //let expected_x = self.expected_inv(y);
+        //expected_x.saturating_sub(x).saturating_abs().as_int().try_into().unwrap_or(u128::MAX)
     }
 }
 
@@ -149,12 +149,12 @@ impl<F: Fracint> Optimizeable for Sqrt<F> {
         let n: u128 = self.n.try_into().unwrap();
         let mut x = self.start;
         for _ in 0..n {
-            res = res.saturating_add(self.error(x));
+            res = max(res, self.error(x));
             x += step;
         }
         // for the last one, make sure we get the max value (the division for `step`
         // truncates) so that our optimizer disfavors overflow edge cases
-        res = res.saturating_add(self.error(self.end));
+        res = max(res, self.error(self.end));
         res
     }
 

@@ -38,30 +38,8 @@ macro_rules! impl_signed {
                 self.0
             }
 
-            fn signum(self) -> Self {
-                if self < Self::ZERO {
-                    Self::NEG_ONE
-                } else if self == Self::ZERO {
-                    Self::ZERO
-                } else {
-                    Self::ONE
-                }
-            }
-
-            fn wrapping_abs(self) -> Self {
-                if self.is_negative() {
-                    self.wrapping_neg()
-                } else {
-                    self
-                }
-            }
-
             fn overflowing_abs(self) -> (Self, bool) {
                 (self.wrapping_abs(), self == Self::MIN)
-            }
-
-            fn saturating_abs(self) -> Self {
-                self.checked_abs().unwrap_or(Self::ONE)
             }
 
             fn wrapping_neg(self) -> Self {
