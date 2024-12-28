@@ -1,3 +1,4 @@
+use core::fmt;
 use std::fmt::Debug;
 
 use fracints::{fi64, Fracint};
@@ -5,8 +6,9 @@ use star_rng::StarRng;
 
 pub trait Optimizeable: Debug + Clone {
     type Temperature;
+    type Cost: Copy + Ord + fmt::Display;
 
-    fn cost(&self) -> u128;
+    fn cost(&self) -> Self::Cost;
 
     fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature);
 }
@@ -16,7 +18,7 @@ pub trait Optimizeable: Debug + Clone {
 /// are available, because we want to optimize exactly with the real bit errors.
 pub struct RampOptimize<O: Optimizeable> {
     rng: StarRng,
-    pub beam: Vec<(u128, O)>,
+    pub beam: Vec<(O::Cost, O)>,
 }
 
 impl<O: Optimizeable> Debug for RampOptimize<O> {
@@ -38,7 +40,7 @@ impl<O: Optimizeable> RampOptimize<O> {
             beam: vec![],
         };
         for _ in 0..population {
-            res.beam.push((u128::MAX, init.clone()));
+            res.beam.push((init.cost(), init.clone()));
         }
         res
     }

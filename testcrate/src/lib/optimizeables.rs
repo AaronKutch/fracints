@@ -1,11 +1,7 @@
-use std::cmp::max;
-
 use fracints::Fracint;
 use star_rng::StarRng;
 
-use crate::Optimizeable;
-
-// typically I would go for bit flipping, bit this is important for switching
+// typically I would go for bit flipping, but this is important for switching
 // between small positives and negatives
 
 pub struct FracintTemperature {
@@ -101,70 +97,5 @@ impl<F: Fracint> Rational<F> {
             1 => self.den.mutate(rng, temp),
             _ => unreachable!(),
         }
-    }
-}
-
-// TODO for a more serious implementation we would be using unsigned fracints
-// and some offset translation
-
-/// Optimizes for y = sqrt(x) in a range `start..=end`, and makes sure the
-/// output always underestimates the true value
-#[derive(Debug, Clone)]
-pub struct Sqrt<F: Fracint> {
-    pub rational: Rational<F>,
-    pub start: F,
-    pub end: F,
-    pub n: F::Int,
-}
-
-impl<F: Fracint> Sqrt<F> {
-    pub fn eval(&self, x: F) -> F {
-        self.rational.eval(x)
-    }
-
-    /// calculates the expected inverse x = y^2
-    pub fn expected_inv(&self, y: F) -> F {
-        y.saturating_mul(y)
-    }
-
-    /// Calculates an error from the expected value
-    pub fn error(&self, x: F) -> u128 {
-        let y = self.eval(x);
-        if y < F::ZERO {
-            return u128::MAX;
-        }
-        // TODO we should be able to move the more accurate `sqrt_slow` to `Fracint`
-        let expected_y = x.sqrt_simple_bisection();
-        let diff = expected_y.saturating_sub(y);
-        if diff < F::ZERO {
-            return u128::MAX;
-        }
-        diff.as_int().try_into().unwrap_or(u128::MAX)
-        //let expected_x = self.expected_inv(y);
-        //expected_x.saturating_sub(x).saturating_abs().as_int().try_into().
-        // unwrap_or(u128::MAX)
-    }
-}
-
-impl<F: Fracint> Optimizeable for Sqrt<F> {
-    type Temperature = FracintTemperature;
-
-    fn cost(&self) -> u128 {
-        let mut res = 0u128;
-        let step = (self.end - self.start).saturating_div_int(self.n);
-        let n: u128 = self.n.try_into().unwrap();
-        let mut x = self.start;
-        for _ in 0..n {
-            res = max(res, self.error(x));
-            x += step;
-        }
-        // for the last one, make sure we get the max value (the division for `step`
-        // truncates) so that our optimizer disfavors overflow edge cases
-        res = max(res, self.error(self.end));
-        res
-    }
-
-    fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature) {
-        self.rational.mutate(rng, temp);
     }
 }

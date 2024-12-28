@@ -44,7 +44,12 @@ pub trait Fracint:
     + Sum
     + Product
 {
-    type Int: Sized + Clone + Copy + TryInto<u128, Error: fmt::Debug> + fmt::Debug;
+    type Int: Sized
+        + Clone
+        + Copy
+        + TryInto<u128, Error: fmt::Debug>
+        + TryFrom<u128, Error: fmt::Debug>
+        + fmt::Debug;
 
     /// The number of bits in this type
     const BITS: usize;

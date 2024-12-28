@@ -1,7 +1,7 @@
 use fracints_internals::awint::{Bits, InlAwi};
 use crate::Fracint;
 
-// TODO this can't be made to work currently
+// TODO this can't be made to work currently. Possibly, what we want is to split `Copy` and various assumed `const` components from `Fracint` into their own trait, which would open up dynamically sized fracints.
 
 //#![cfg_attr(feature = "unstable", feature(generic_const_exprs))]
 //#![cfg_attr(feature = "unstable", allow(incomplete_features))]
