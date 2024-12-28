@@ -11,6 +11,9 @@ pub trait Optimizeable: Debug + Clone {
     fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature);
 }
 
+/// For quickly determining through brute force stochastic methods if there are
+/// good approximations. We use this in this crate even when closed form methods
+/// are available, because we want to optimize exactly with the real bit errors.
 pub struct RampOptimize<O: Optimizeable> {
     rng: StarRng,
     pub beam: Vec<(u128, O)>,

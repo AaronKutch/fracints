@@ -173,6 +173,8 @@ macro_rules! impl_signed {
             /// ```
             #[cfg(feature = "rand_support")]
             fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Result<Self, rand_core::Error> {
+                // TODO this seems to be slow in some cases, use `next_u32` and `next_u64` when
+                // possible
                 let mut dst = Self::ZERO.0.to_le_bytes();
                 rng.try_fill_bytes(&mut dst)?;
                 let x = Self(Self::Int::from_le_bytes(dst));
@@ -350,49 +352,6 @@ macro_rules! impl_signed {
                     (true, true) => {
                         let t = self.wrapping_add($ty::MIN / -2) * 2;
                         (t.sin_taudiv4_taylor_base(), -t.cos_taudiv4_taylor_base())
-                    }
-                }
-            }
-
-            // TODO
-            pub fn bezerp(bez: &[$ty], t: &$ty) -> $ty {
-                let mut temp1 = bez.to_vec();
-                let mut temp0: Vec<$ty>;
-                loop {
-                    temp0 = temp1;
-                    temp1 = Vec::new();
-                    for i in 0..(temp0.len() - 1) {
-                        temp1.push((($ty::ONE - *t) * temp0[i]) + (*t * temp0[i + 1]));
-                    }
-                    if temp1.len() == 1 {
-                        break temp1[0].clone();
-                    }
-                }
-            }
-
-            /// TODO
-            /// bez.len() must == weight.len()
-            pub fn rational_bezerp(bez: &[$ty], weight: &[$ty], t: &$ty) -> $ty {
-                let mut temp1 = bez.to_vec();
-                let mut temp0: Vec<$ty>;
-                let mut temp_weight1 = weight.to_vec();
-                let mut temp_weight0: Vec<$ty>;
-                loop {
-                    temp0 = temp1;
-                    temp1 = Vec::new();
-                    temp_weight0 = temp_weight1;
-                    temp_weight1 = Vec::new();
-                    for i in 0..(temp0.len() - 1) {
-                        let weight =
-                            (($ty::ONE - *t) * temp_weight0[i]) + (*t * temp_weight0[i + 1]);
-                        temp_weight1.push(weight);
-                        temp1.push(
-                            ((($ty::ONE - *t) * temp0[i]) + (*t * temp0[i + 1]))
-                                .saturating_div(weight),
-                        );
-                    }
-                    if temp1.len() == 1 {
-                        break temp1.clone()[0];
                     }
                 }
             }

@@ -52,18 +52,18 @@ impl<F: Fracint> Poly<F> {
     }
 
     pub fn eval(&self, t: F) -> F {
-        let mut add = F::ZERO;
-        let mut mul = t;
-        for i in 0..self.a.len() {
-            if i == 0 {
-                // avoid F::ONE multiplication error
-                add = add.wrapping_add(self.a[i]);
-            } else {
-                add = add.wrapping_add(self.a[i].saturating_mul(mul));
-                mul = mul.saturating_mul(t);
-            }
+        // use Horner evaluation
+        // a0 + ((a1 + (a2 * t)) * t)
+        let len = self.a.len();
+        if len == 0 {
+            return F::ZERO
         }
-        add
+        let mut res = self.a[len - 1];
+        for i in (0..(len - 1)).rev() {
+            // use wrapping ops because that's what we would be using in optimized curves
+            res = res.wrapping_mul(t).wrapping_add(self.a[i]);
+        }
+        res
     }
 
     pub fn mutate(&mut self, rng: &mut StarRng, temp: &FracintTemperature) {
@@ -107,7 +107,8 @@ impl<F: Fracint> Rational<F> {
 // TODO for a more serious implementation we would be using unsigned fracints
 // and some offset translation
 
-/// Optimizes for y = sqrt(x) in a range `start..=end`
+/// Optimizes for y = sqrt(x) in a range `start..=end`, and makes sure the
+/// output always underestimates the true value
 #[derive(Debug, Clone)]
 pub struct Sqrt<F: Fracint> {
     pub rational: Rational<F>,
@@ -134,9 +135,14 @@ impl<F: Fracint> Sqrt<F> {
         }
         // TODO we should be able to move the more accurate `sqrt_slow` to `Fracint`
         let expected_y = x.sqrt_simple_bisection();
-        expected_y.saturating_sub(y).saturating_abs().as_int().try_into().unwrap_or(u128::MAX)
+        let diff = expected_y.saturating_sub(y);
+        if diff < F::ZERO {
+            return u128::MAX;
+        }
+        diff.as_int().try_into().unwrap_or(u128::MAX)
         //let expected_x = self.expected_inv(y);
-        //expected_x.saturating_sub(x).saturating_abs().as_int().try_into().unwrap_or(u128::MAX)
+        //expected_x.saturating_sub(x).saturating_abs().as_int().try_into().
+        // unwrap_or(u128::MAX)
     }
 }
 
