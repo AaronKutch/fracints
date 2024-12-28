@@ -30,12 +30,15 @@ pub fn mutate_fracint<F: Fracint>(f: &mut F, rng: &mut StarRng, temp: &FracintTe
 #[derive(Debug, Clone)]
 pub struct Poly<F: Fracint> {
     pub a: Vec<F>,
+    // necessary because of inaccuracies with different regions of the t^2 term
+    pub offset: F,
 }
 
 impl<F: Fracint> Poly<F> {
     pub fn zero(n: usize) -> Self {
         Self {
             a: vec![F::ZERO; n],
+            offset: F::ZERO,
         }
     }
 
@@ -44,10 +47,15 @@ impl<F: Fracint> Poly<F> {
         for _ in 0..n {
             a.push(F::rand(rng).unwrap());
         }
-        Self { a }
+        Self {
+            a,
+            offset: F::rand(rng).unwrap(),
+        }
     }
 
-    pub fn eval(&self, t: F) -> F {
+    pub fn eval(&self, mut t: F) -> F {
+        // offset
+        t = t.wrapping_add(self.offset);
         // use Horner evaluation
         // a0 + ((a1 + (a2 * t)) * t)
         let len = self.a.len();
@@ -63,8 +71,11 @@ impl<F: Fracint> Poly<F> {
     }
 
     pub fn mutate(&mut self, rng: &mut StarRng, temp: &FracintTemperature) {
-        if let Some(x) = rng.index_slice_mut(&mut self.a) {
-            mutate_fracint(x, rng, temp)
+        let i = rng.index(self.a.len() + 1).unwrap();
+        if i == 0 {
+            mutate_fracint(&mut self.offset, rng, temp)
+        } else {
+            mutate_fracint(&mut self.a[i - 1], rng, temp)
         }
     }
 }

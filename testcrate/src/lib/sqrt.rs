@@ -6,7 +6,7 @@ use std::cmp::max;
 use fracints::prelude::*;
 use star_rng::StarRng;
 
-use crate::{FracintTemperature, Optimizeable, Poly, RampOptimize};
+use crate::{mutate_fracint, FracintTemperature, Optimizeable, RampOptimize};
 
 /*
 any kind of polynomial or rational has horrible convergence for square roots, only degree 2
@@ -66,7 +66,10 @@ y_0 =
 /// despite any calculation jaggedness)
 #[derive(Debug, Clone)]
 pub struct ISqrt<F: Fracint + FracintDouble> {
-    pub poly: Poly<F>,
+    pub offset: F,
+    pub a0: F,
+    pub a1: F,
+    pub a2: F,
     pub start: F,
     pub end: F,
     pub n: F::Int,
@@ -75,8 +78,31 @@ pub struct ISqrt<F: Fracint + FracintDouble> {
 // TODO we should be able to move the more accurate `sqrt_slow` to `Fracint` so
 // we don't need `FracintDouble`
 impl<F: Fracint + FracintDouble> ISqrt<F> {
-    pub fn eval(&self, x: F) -> F {
-        self.poly.eval(x)
+    pub fn rand(start: F, end: F, n: F::Int, rng: &mut StarRng) -> Self {
+        Self {
+            offset: F::rand(rng).unwrap(),
+            a0: F::rand(rng).unwrap(),
+            a1: F::rand(rng).unwrap(),
+            a2: F::rand(rng).unwrap(),
+            start,
+            end,
+            n,
+        }
+    }
+
+    pub fn eval(&self, mut x: F) -> F {
+        // custom polynomial where we insert two left shifts in order to obtain the
+        // required slope of 4
+        x = x.wrapping_add(self.offset << 1);
+        //x = x << 2;
+        let mut res = self.a2.wrapping_mul(x);
+        res = res << 1;
+        res = res.wrapping_add(self.a1);
+        res = res.wrapping_mul(x);
+        res = res << 1;
+        res = res.wrapping_add(self.a0);
+        res = res << 1;
+        res
     }
 
     pub fn isqrt_sub1(&self, x: F) -> F {
@@ -125,97 +151,121 @@ impl<F: Fracint + FracintDouble> Optimizeable for ISqrt<F> {
     }
 
     fn mutate(&mut self, rng: &mut StarRng, temp: &Self::Temperature) {
-        self.poly.mutate(rng, temp);
+        match rng.index(4).unwrap() {
+            0 => mutate_fracint(&mut self.offset, rng, temp),
+            1 => mutate_fracint(&mut self.a0, rng, temp),
+            2 => mutate_fracint(&mut self.a1, rng, temp),
+            3 => mutate_fracint(&mut self.a2, rng, temp),
+            _ => unreachable!(),
+        }
     }
 }
 
 /// Calculates `1/sqrt(x)` for [0.25, 1.0]. Assumes `N` is of the form `3 *
 /// (2^M)`.
-pub struct ISqrtInitialLUT<F: Fracint, const N: usize>(pub [(F, F, F); N]);
+pub struct ISqrtInitialLUT<F: Fracint, const N: usize>(pub [(F, F, F, F); N]);
 
 impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
     /// we don't have stable const traits and have to use this method that will
     /// then produce the values actually placed in the LUT constant
-    pub fn generate() -> (Vec<(F, F, F)>, F) {
+    pub fn generate() -> (Vec<(F, F, F, F)>, F) {
+        let seed = 5;
+        let rng = &mut StarRng::new(seed);
         if !F::SIGNED {
             // also we would want to claim the extra bit
             todo!()
         }
         let mut res = vec![];
-        let mut worst_error = F::ZERO;
         // 0.25
         let mut start = F::ULP << (F::BITS - 3);
         // no error if in correct form
         let lb_step = (N / 3).trailing_zeros() as usize;
         let step = F::ULP << (F::BITS - lb_step - 3);
+        // this seems to be all that is needed
+        let n = 4.try_into().unwrap();
+
+        // TODO the topology of this optimization must be much rougher than I expected
+        // or I am doing something wrong, because it is the most finicky thing ever,
+        // need a more rigorous way of doing this, perhaps the plain curve fitting
+        // methods or a simple LUT would have worked but this is good enough for now
         for _ in 0..N {
-            let end = start + step;
+            // have to add some total retries on top of all this
+            let mut actual_best = None;
+            let mut actual_worst_error = F::MAX;
+            'outer: for i in 0..16 {
+                let mut worst_error = F::ZERO;
+                let end = start + step;
 
-            // it seems only a simple degree 2 polynomial is reasonable, others add too
-            // little to be worth it
-            let seed = 0;
-            let init = ISqrt {
-                poly: Poly::zero(3),
-                start,
-                end,
-                n: 4.try_into().unwrap(), // this seems to be all that is needed
-            };
-            // also the topology must have many local minimums which I didn't expect or I
-            // suspect I am doing something wrong, because it is not always a consistent
-            // result across multiple seeds
-            let mut ramp = RampOptimize::new(init, seed, 128);
-            for frozen_sig_add in 0..F::BITS {
-                for _ in 0..100 {
-                    ramp.step(&FracintTemperature { frozen_sig_add });
+                let mut init = ISqrt::rand(start, end, n, rng);
+                let init_best_cost = init.cost();
+                for _ in 0..1000 {
+                    let next = ISqrt::rand(start, end, n, rng);
+                    let cost = next.cost();
+                    if cost < init_best_cost {
+                        init = next;
+                    }
+                }
+
+                let mut ramp = RampOptimize::new(init, i, 128);
+                for frozen_sig_add in 0..F::BITS {
+                    for _ in 0..300 {
+                        ramp.step(&FracintTemperature { frozen_sig_add });
+                    }
+                }
+                let mut best = ramp.best();
+
+                // we don't have a quick perfect method of insuring not overestimating (which
+                // would result in catastrophic overflow which we definitely do not want), for
+                // now just brute force subtract as necessary which is good for 16 bits
+                let mut x = start;
+                let mut worst_over = F::ZERO;
+                loop {
+                    if x >= end {
+                        break
+                    }
+
+                    let expected_y = best.isqrt_sub1(x);
+                    let diff = best.eval(x).saturating_sub(expected_y);
+                    // `>=` because the truncated parts can break ties in the wrong way
+                    if diff >= F::ZERO {
+                        worst_over = max(worst_over, diff);
+                    }
+                    x += F::ULP;
+                }
+
+                // correct the constant term
+                if worst_over > F::ZERO {
+                    best.a0 -= worst_over + F::ULP;
+                }
+
+                // double check
+                let mut x = start;
+                loop {
+                    if x >= end {
+                        break
+                    }
+
+                    let expected_y = best.isqrt_sub1(x);
+                    let y = best.eval(x);
+                    if y >= expected_y {
+                        continue 'outer;
+                    }
+
+                    worst_error = max(worst_error, expected_y - y);
+                    x += F::ULP;
+                }
+
+                if worst_error < actual_worst_error {
+                    actual_worst_error = worst_error;
+                    actual_best = Some(best);
                 }
             }
-            let mut best = ramp.best();
-
-            // we don't have a quick perfect method of insuring not overestimating (which
-            // would result in catastrophic overflow which we definitely do not want), for
-            // now just brute force subtract as necessary which is good for 16 bits
-            let mut x = start;
-            let mut worst_over = F::ZERO;
-            loop {
-                if x >= end {
-                    break
-                }
-
-                let expected_y = best.isqrt_sub1(x);
-                let diff = best.eval(x).saturating_sub(expected_y);
-                // `>=` because the truncated parts can break ties in the wrong way
-                if diff >= F::ZERO {
-                    worst_over = max(worst_over, diff);
-                }
-                x += F::ULP;
-            }
-
-            // correct the constant term
-            if worst_over > F::ZERO {
-                best.poly.a[0] -= worst_over + F::ULP;
-            }
-
-            // double check
-            let mut x = start;
-            loop {
-                if x >= end {
-                    break
-                }
-
-                let expected_y = best.isqrt_sub1(x);
-                let y = best.eval(x);
-                if y >= expected_y {
-                    //panic!()
-                }
-
-                worst_error = max(worst_error, expected_y - y);
-                x += F::ULP;
-            }
-
-            res.push((best.poly.a[0], best.poly.a[1], best.poly.a[2]));
+            let best = actual_best.unwrap();
+            res.push((best.offset, best.a0, best.a1, best.a2));
+            dbg!(res.last().unwrap(), actual_worst_error);
 
             start += step;
         }
-        (res, worst_error)
+        (res, F::ZERO)
     }
 }
