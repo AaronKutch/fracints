@@ -1,7 +1,7 @@
 // TODO for a more serious implementation we would be using unsigned fracints
 // and some offset translation
 
-use std::cmp::max;
+use std::{ cmp::max};
 
 use fracints::prelude::*;
 use star_rng::StarRng;
@@ -92,9 +92,8 @@ impl<F: Fracint + FracintDouble> ISqrt<F> {
 
     pub fn eval(&self, mut x: F) -> F {
         // custom polynomial where we insert two left shifts in order to obtain the
-        // required slope of 4
-        x = x.wrapping_add(self.offset << 1);
-        //x = x << 2;
+        // required slope
+        x = x.wrapping_add(self.offset);
         let mut res = self.a2.wrapping_mul(x);
         res = res << 1;
         res = res.wrapping_add(self.a1);
@@ -188,11 +187,13 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
         // or I am doing something wrong, because it is the most finicky thing ever,
         // need a more rigorous way of doing this, perhaps the plain curve fitting
         // methods or a simple LUT would have worked but this is good enough for now
+
+        // TODO nope we are just using the simple LUT
         for _ in 0..N {
             // have to add some total retries on top of all this
             let mut actual_best = None;
             let mut actual_worst_error = F::MAX;
-            'outer: for i in 0..16 {
+            'outer: for i in 0..8 {
                 let mut worst_error = F::ZERO;
                 let end = start + step;
 
@@ -268,4 +269,98 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
         }
         (res, F::ZERO)
     }
+}
+
+pub fn isqrt_sub1<F: Fracint + FracintDouble>(x: F) -> F {
+    let sqrt = x.widen().sqrt_simple_bisection();
+    ((F::Double::ONE - sqrt) / sqrt).truncate()
+}
+
+pub fn eval_simple_isqrt_lut(lut: &[fi16], bits: usize, x: fi16) -> fi16 {
+    if x < fi16::ZERO {
+        return fi16::ZERO
+    }
+    // we will find the interval `x` lies in and interpolate between the two LUT slots
+
+    // find the index in the LUT so we find the two sides of an interval
+    let x_i = x.as_int() as u16;
+    let inx0 = x_i >> (16 - 1 - bits);
+    let rem = x_i.wrapping_sub(inx0 << (16 - 1 - bits));
+    // the fractional point within that interval
+    let rem_inx = fi16::from_int((rem << bits) as i16);
+    // adjust for the 0.25 start
+    let inx0 = inx0.wrapping_sub(0b1 << (bits - 2));
+    let y0 = lut[inx0 as usize];
+    let inx1 = inx0.wrapping_add(1);
+    if (inx1 as usize) < lut.len() {
+        let y1 = lut[inx1 as usize];
+        // (y1 - y0)*t + y0
+        y1.wrapping_sub(y0).wrapping_mul(rem_inx).wrapping_add(y0)
+    } else {
+        // y0*(1 - t)
+        fi16::ONE.wrapping_sub(rem_inx).wrapping_mul(y0)
+    }
+}
+
+pub fn simple_isqrt_lut(n: usize) -> (Vec<fi16>, usize) {
+    assert!((n % 3) == 0);
+    assert!((n / 3).is_power_of_two());
+    assert!(n <= 4096);
+    assert!(n >= 6);
+    let bits = ((n / 3).trailing_zeros() as usize) + 2;
+    let mut lut = vec![];
+    let mut start = fi16!(0.25);
+    let step = fi16!(0.75).saturating_div_int(n as i16);
+    for _ in 0..n {
+        lut.push(isqrt_sub1(start));
+        start += step;
+    }
+
+    // make sure we always underestimate
+    let mut x = fi16!(0.25);
+    let mut worst_over = fi16!(0.0);
+    loop {
+        if x == fi16!(1.0) {
+            break
+        }
+        let max_y = isqrt_sub1(x) - fi16::ULP.saturating_mul_int(2);
+        let actual_y = eval_simple_isqrt_lut(&lut, bits, x);
+        if actual_y > max_y {
+            let over = actual_y - max_y;
+            if over > worst_over {
+                worst_over = over;
+            }
+        }
+
+        x += fi16::ULP;
+    }
+    // we are just moving all of them down
+    for y in &mut lut {
+        *y -= worst_over;
+    }
+
+    // recalculate and check
+    let mut x = fi16!(0.25);
+    let mut worst_under = fi16!(0.0);
+    loop {
+        if x == fi16!(1.0) {
+            break
+        }
+        let max_y = isqrt_sub1(x) - fi16::ULP;
+        let actual_y = eval_simple_isqrt_lut(&lut, bits, x);
+        if max_y < actual_y {
+            dbg!(x, max_y, actual_y);
+            //panic!()
+        } else {
+            let under = max_y - actual_y;
+            if under > worst_under {
+                worst_under = under;
+            }
+        }
+
+        x += fi16::ULP;
+    }
+    dbg!(worst_under);
+
+    (lut, bits)
 }
