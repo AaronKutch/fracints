@@ -24,6 +24,15 @@ fn f64_sqrt(bencher: &mut Bencher) {
 }
 
 #[bench]
+fn fi64_sqrt(bencher: &mut Bencher) {
+    let mut rng = StarRng::new(0);
+    bencher.iter(|| {
+        let x = fi64::from_int((rng.next_u64() as i64).wrapping_abs());
+        x.sqrt_fast()
+    })
+}
+
+#[bench]
 fn fi64_widen_sqr(bencher: &mut Bencher) {
     let rng = &mut StarRng::new(0);
     bencher.iter(|| {

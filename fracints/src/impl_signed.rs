@@ -25,7 +25,7 @@ macro_rules! sqrt_fast {
 
             let lz = s.as_int().leading_zeros();
             let mut shift = 0;
-            if lz > 3 {
+            if lz >= 3 {
                 shift = ((lz - 1) / 2) as usize;
             }
             s <<= shift * 2;
