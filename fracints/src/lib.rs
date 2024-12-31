@@ -6,16 +6,17 @@
 
 mod constants;
 mod impl_signed;
-mod traits;
+#[doc(hidden)]
+pub mod internal;
 
-pub use fracints_internals::FracintSerdeError;
+pub use fracints_internals::{traits::*, FracintSerdeError};
 pub use fracints_macros::*;
-pub use traits::*;
 
 pub use crate::impl_signed::*;
 
 pub mod prelude {
+    pub use fracints_internals::traits::*;
     pub use fracints_macros::*;
 
-    pub use crate::{impl_signed::*, traits::*};
+    pub use crate::impl_signed::*;
 }

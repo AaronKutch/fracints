@@ -308,6 +308,10 @@ pub trait Fracint:
             set_bit >>= 1;
         }
     }
+
+    /// Fast way of calculating the square root to within a few ULPs of the true
+    /// value.
+    fn sqrt_fast(self) -> Self;
 }
 
 pub trait FracintDouble: Fracint {

@@ -71,3 +71,32 @@ pub const CONST128: Const128 = Const128 {
     cos_taylor_iters: 0,
     sin_taylor_iters: 0,
 };
+
+pub const SIMPLE_ISQRT_LUT: [fi16; 24] = [
+    fi16(32684),
+    fi16(28936),
+    fi16(25766),
+    fi16(23038),
+    fi16(20658),
+    fi16(18559),
+    fi16(16689),
+    fi16(15009),
+    fi16(13489),
+    fi16(12106),
+    fi16(10839),
+    fi16(9674),
+    fi16(8597),
+    fi16(7598),
+    fi16(6668),
+    fi16(5800),
+    fi16(4986),
+    fi16(4221),
+    fi16(3501),
+    fi16(2822),
+    fi16(2179),
+    fi16(1570),
+    fi16(991),
+    fi16(441),
+];
+pub const SIMPLE_ISQRT_CUTOFF: fi16 = fi16(32747);
+pub const SIMPLE_ISQRT_BITS: usize = 5;

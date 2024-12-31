@@ -5,6 +5,9 @@
 
 use std::fmt::Write;
 
+use common::sqrt::simple_isqrt_lut;
+use fracints::{fi16, Fracint};
+
 pub fn main() {
     let mut s = r#"// The generating function is in the testcrate of the repo containing this
 // crate.
@@ -39,5 +42,24 @@ pub const CONST{w}: Const{w} = Const{w} {{
         .unwrap()
     }
 
-    println!("{s}");
+    // isqrt table
+    let n = 24;
+    // find by setting to 1.0 and using the x value
+    let cutoff = fi16!(0.99936);
+    let (lut, bits) = simple_isqrt_lut(n, cutoff);
+    writeln!(s, r#"pub const SIMPLE_ISQRT_LUT: [fi16; {n}] = ["#).unwrap();
+    for entry in lut {
+        writeln!(s, r#"    fi16({}),"#, entry.as_int()).unwrap();
+    }
+    writeln!(s, r#"];"#).unwrap();
+
+    writeln!(
+        s,
+        r#"pub const SIMPLE_ISQRT_CUTOFF: fi16 = fi16({});"#,
+        cutoff.as_int(),
+    )
+    .unwrap();
+    writeln!(s, r#"pub const SIMPLE_ISQRT_BITS: usize = {bits};"#).unwrap();
+
+    println!("\n\n\nBEGIN:\n{s}");
 }

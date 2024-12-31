@@ -9,6 +9,7 @@ macro_rules! impl_signed {
         $from_str:ident,
         $normalized_mul:expr,
         $normalized_div:expr,
+        $sqrt_fast:expr,
         $c:expr
     ) => {
         // TODO make inner type private, not doing this currently because we need const
@@ -158,6 +159,10 @@ macro_rules! impl_signed {
                 } else {
                     Self(self.0.wrapping_div(rhs))
                 }
+            }
+
+            fn sqrt_fast(self) -> Self {
+                $sqrt_fast(self)
             }
 
             /// Generates a random fracint from the given entropy.

@@ -13,10 +13,10 @@ categories = ["data-structures", "mathematics", "algorithms", "no-std"]
 publish = false
 
 [dependencies]
-fracints_internals = { version = "0.1", path = "../fracints_internals" }
+fracints_internals = { version = "0.1", path = "../fracints_internals", default-features = false }
 fracints_macros = { version = "0.1", path = "../fracints_macros" }
-rand_core = { version = "0.6", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
+rand_core = { version = "0.6", optional = true }
 
 [dev-dependencies]
 rand = "0.8"
@@ -24,5 +24,5 @@ rand = "0.8"
 [features]
 default = ["std"]
 std = []
-rand_support = ["rand_core"]
+rand_support = ["rand_core", "fracints_internals/rand_support"]
 serde_support = ["serde"]

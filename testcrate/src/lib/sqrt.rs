@@ -1,9 +1,9 @@
 // TODO for a more serious implementation we would be using unsigned fracints
 // and some offset translation
 
-use std::{ cmp::max};
+use std::cmp::max;
 
-use fracints::prelude::*;
+use fracints::{internal::eval_simple_isqrt_lut, prelude::*};
 use star_rng::StarRng;
 
 use crate::{mutate_fracint, FracintTemperature, Optimizeable, RampOptimize};
@@ -13,9 +13,7 @@ any kind of polynomial or rational has horrible convergence for square roots, on
 polynomials or simple ad-hoc methods are reasonable for getting a few bits of precision, and then
 some iterative method should be used to converge on the value.
 
-TODO
-
-There should probably be a LUT of
+Currently we use a simple interpolation betwee values of a LUT to get at least 8 bits of precision.
 
 Goldschmidt for sqrt(x) and isqrt(x) seems like the best approach for a pure integer iterative
 method. It looks like:
@@ -35,8 +33,6 @@ x_0 = S * (1 + f) = g // g in [0.0, 1.0)
                       // (if we ensure that the initial approx. is always an underestimation)
 h_0 = 0.5 * (1 + f) = h // h in [0.0, 1.0)
 
-// and 0.25 may need to be special cased
-
 // then the rest of the steps are ideal fracints
 
 the initial `f` value can be from a LUT or from carefully chosen polynomials (which could also
@@ -54,10 +50,34 @@ We first transform for the interval [4^(-2), 4^(-1)] with
 
 sqrt(0.11) = 2^(-1) * sqrt((4^(--1)) * 0.11) = (0.5) * sqrt(0.44)
 
-We now calculate sqrt(0.44) with Goldschmidt
+We calculate `f = 1/sqrt(S) - 1` with the `SIMPLE_ISQRT_LUT` and get
 
-y_0 =
+f = 0.5069_fi16
 
+as our first approximation
+
+g = S + S*f = 0.44 + 0.44 - 0.5069 = 0.6630615233
+
+h = 0.5 + 0.5*f = 0.7534790039
+
+Now Goldschmidt
+
+r = 0.5 - (g * h) = 0.0015295830368995667
+g = g + (r * g) = 0.6633226277964262409
+h = h + (r * h) = 0.7537757134050298191
+
+// ...
+0.0000035130150497475
+0.6633249580588005277
+0.7537783614304551451
+
+0.0000000000185119555
+0.6633249580710799698
+0.7537783614444090566
+
+g = 0.6633249580710799698 is the final goldschmidt result
+
+sqrt(0.11) = (0.5) * sqrt(0.44) = 0.3316624790355399849 which is perfect
 */
 
 /// Optimizes for y = 1/sqrt(x) - 1 in a range `start..=end`, and tries to make
@@ -95,12 +115,12 @@ impl<F: Fracint + FracintDouble> ISqrt<F> {
         // required slope
         x = x.wrapping_add(self.offset);
         let mut res = self.a2.wrapping_mul(x);
-        res = res << 1;
+        res <<= 1;
         res = res.wrapping_add(self.a1);
         res = res.wrapping_mul(x);
-        res = res << 1;
+        res <<= 1;
         res = res.wrapping_add(self.a0);
-        res = res << 1;
+        res <<= 1;
         res
     }
 
@@ -276,33 +296,7 @@ pub fn isqrt_sub1<F: Fracint + FracintDouble>(x: F) -> F {
     ((F::Double::ONE - sqrt) / sqrt).truncate()
 }
 
-pub fn eval_simple_isqrt_lut(lut: &[fi16], bits: usize, x: fi16) -> fi16 {
-    if x < fi16::ZERO {
-        return fi16::ZERO
-    }
-    // we will find the interval `x` lies in and interpolate between the two LUT slots
-
-    // find the index in the LUT so we find the two sides of an interval
-    let x_i = x.as_int() as u16;
-    let inx0 = x_i >> (16 - 1 - bits);
-    let rem = x_i.wrapping_sub(inx0 << (16 - 1 - bits));
-    // the fractional point within that interval
-    let rem_inx = fi16::from_int((rem << bits) as i16);
-    // adjust for the 0.25 start
-    let inx0 = inx0.wrapping_sub(0b1 << (bits - 2));
-    let y0 = lut[inx0 as usize];
-    let inx1 = inx0.wrapping_add(1);
-    if (inx1 as usize) < lut.len() {
-        let y1 = lut[inx1 as usize];
-        // (y1 - y0)*t + y0
-        y1.wrapping_sub(y0).wrapping_mul(rem_inx).wrapping_add(y0)
-    } else {
-        // y0*(1 - t)
-        fi16::ONE.wrapping_sub(rem_inx).wrapping_mul(y0)
-    }
-}
-
-pub fn simple_isqrt_lut(n: usize) -> (Vec<fi16>, usize) {
+pub fn simple_isqrt_lut(n: usize, cutoff: fi16) -> (Vec<fi16>, usize) {
     assert!((n % 3) == 0);
     assert!((n / 3).is_power_of_two());
     assert!(n <= 4096);
@@ -323,8 +317,8 @@ pub fn simple_isqrt_lut(n: usize) -> (Vec<fi16>, usize) {
         if x == fi16!(1.0) {
             break
         }
-        let max_y = isqrt_sub1(x) - fi16::ULP.saturating_mul_int(2);
-        let actual_y = eval_simple_isqrt_lut(&lut, bits, x);
+        let max_y = isqrt_sub1(x) - fi16::ULP;
+        let actual_y = eval_simple_isqrt_lut(&lut, cutoff, bits, x);
         if actual_y > max_y {
             let over = actual_y - max_y;
             if over > worst_over {
@@ -334,6 +328,7 @@ pub fn simple_isqrt_lut(n: usize) -> (Vec<fi16>, usize) {
 
         x += fi16::ULP;
     }
+    println!("worst_over:{worst_over}");
     // we are just moving all of them down
     for y in &mut lut {
         *y -= worst_over;
@@ -341,26 +336,27 @@ pub fn simple_isqrt_lut(n: usize) -> (Vec<fi16>, usize) {
 
     // recalculate and check
     let mut x = fi16!(0.25);
+    let mut worst_x = fi16!(0.0);
     let mut worst_under = fi16!(0.0);
     loop {
         if x == fi16!(1.0) {
             break
         }
         let max_y = isqrt_sub1(x) - fi16::ULP;
-        let actual_y = eval_simple_isqrt_lut(&lut, bits, x);
+        let actual_y = eval_simple_isqrt_lut(&lut, cutoff, bits, x);
         if max_y < actual_y {
-            dbg!(x, max_y, actual_y);
-            //panic!()
+            panic!("x:{x} max_y:{max_y} actual_y:{actual_y}")
         } else {
             let under = max_y - actual_y;
             if under > worst_under {
+                worst_x = x;
                 worst_under = under;
             }
         }
 
         x += fi16::ULP;
     }
-    dbg!(worst_under);
+    println!("worst_x:{worst_x} worst_under:{worst_under}");
 
     (lut, bits)
 }

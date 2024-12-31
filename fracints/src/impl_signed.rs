@@ -14,7 +14,62 @@ use fracints_internals::{impl_signed, *};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{constants::*, Fracint, FracintDouble, FracintHalf};
+use crate::{constants::*, internal::*, Fracint, FracintDouble, FracintHalf};
+
+macro_rules! sqrt_fast {
+    ($name:ident, $ty:ident, $n:expr, $truncate:tt, $widen:tt) => {
+        pub fn $name(mut s: $ty) -> $ty {
+            if s <= $ty::ZERO {
+                return $ty::ZERO
+            }
+
+            let lz = s.as_int().leading_zeros();
+            let mut shift = 0;
+            if lz > 3 {
+                shift = ((lz - 1) / 2) as usize;
+            }
+            s <<= shift * 2;
+
+            let f = eval_simple_isqrt_lut(
+                &SIMPLE_ISQRT_LUT,
+                SIMPLE_ISQRT_CUTOFF,
+                SIMPLE_ISQRT_BITS,
+                ($truncate)(s),
+            );
+            let f = ($widen)(f);
+
+            let tmp = goldschmidt(s, f, $n);
+
+            tmp >> shift
+        }
+    };
+}
+
+pub fn sqrt_fast_fi8(s: fi8) -> fi8 {
+    s.sqrt_slow()
+}
+
+sqrt_fast!(sqrt_fast_fi16, fi16, 1, { |s: fi16| s }, { |f: fi16| f });
+
+sqrt_fast!(sqrt_fast_fi32, fi32, 2, { |s: fi32| s.truncate() }, {
+    |f: fi16| f.widen()
+});
+
+sqrt_fast!(
+    sqrt_fast_fi64,
+    fi64,
+    3,
+    { |s: fi64| s.truncate().truncate() },
+    { |f: fi16| f.widen().widen() }
+);
+
+sqrt_fast!(
+    sqrt_fast_fi128,
+    fi128,
+    4,
+    { |s: fi128| s.truncate().truncate().truncate() },
+    { |f: fi16| f.widen().widen().widen() }
+);
 
 macro_rules! impl_signed1 {
     ($(
@@ -25,6 +80,7 @@ macro_rules! impl_signed1 {
         $iD:ident,
         $to_string:ident,
         $from_str:ident,
+        $sqrt_fast:ident,
         $c:expr
     );*;) => {$(
         impl_signed!(
@@ -36,16 +92,17 @@ macro_rules! impl_signed1 {
             $from_str,
             |a: $iX, b: $iX| (($iD::from(a) * $iD::from(b)) >> ($uX::BITS - 1)) as $iX,
             |a: $iX, b: $iX| (($iD::from(a) << ($uX::BITS - 1)) / $iD::from(b)) as $iX,
+            $sqrt_fast,
             $c
         );
     )*};
 }
 
 impl_signed1!(
-    fi8, "fi8", i8, u8, i16, i8_to_string, i8_from_str, CONST8;
-    fi16, "fi16", i16, u16, i32, i16_to_string, i16_from_str, CONST16;
-    fi32, "fi32", i32, u32, i64, i32_to_string, i32_from_str, CONST32;
-    fi64, "fi64", i64, u64, i128, i64_to_string, i64_from_str, CONST64;
+    fi8, "fi8", i8, u8, i16, i8_to_string, i8_from_str, sqrt_fast_fi8, CONST8;
+    fi16, "fi16", i16, u16, i32, i16_to_string, i16_from_str, sqrt_fast_fi16, CONST16;
+    fi32, "fi32", i32, u32, i64, i32_to_string, i32_from_str, sqrt_fast_fi32, CONST32;
+    fi64, "fi64", i64, u64, i128, i64_to_string, i64_from_str, sqrt_fast_fi64, CONST64;
 );
 // the 128 bit case needs special handling for the widening multiplies
 impl_signed!(
@@ -105,6 +162,7 @@ impl_signed!(
         }
         quo as i128
     },
+    sqrt_fast_fi128,
     CONST128
 );
 
