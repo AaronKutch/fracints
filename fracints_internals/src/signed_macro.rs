@@ -248,6 +248,10 @@ macro_rules! impl_signed {
                 );
             }
             /*
+            // TODO I suspect that the polynomial method should work a lot better with cos_sin,
+            // I have seen rational beziers get 0.0004 before, and more segments with
+            // parameterization correction common to each should get full precision.
+
             /// This is a slower
             /// Intended to only be called for `-0.5 <= self <= 0.5`. This function has
             /// overflows outside of this range.

@@ -95,8 +95,6 @@ pub struct ISqrt<F: Fracint + FracintDouble> {
     pub n: F::Int,
 }
 
-// TODO we should be able to move the more accurate `sqrt_slow` to `Fracint` so
-// we don't need `FracintDouble`
 impl<F: Fracint + FracintDouble> ISqrt<F> {
     pub fn rand(start: F, end: F, n: F::Int, rng: &mut StarRng) -> Self {
         Self {
@@ -206,9 +204,10 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
         // TODO the topology of this optimization must be much rougher than I expected
         // or I am doing something wrong, because it is the most finicky thing ever,
         // need a more rigorous way of doing this, perhaps the plain curve fitting
-        // methods or a simple LUT would have worked but this is good enough for now
-
-        // TODO nope we are just using the simple LUT
+        // methods or a simple LUT would have worked but this is good enough for now.
+        // Although after seeing the performance of the current version, it looks like
+        // the naive LUT is good enough, only if we could get 16 significant bits with
+        // only two or three more multiplications would there be advantage.
         for _ in 0..N {
             // have to add some total retries on top of all this
             let mut actual_best = None;
