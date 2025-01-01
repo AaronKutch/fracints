@@ -13,10 +13,11 @@ categories = ["data-structures", "mathematics", "algorithms", "no-std"]
 publish = false
 
 [dependencies]
+awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
 fracints_internals = { version = "0.1", path = "../fracints_internals", default-features = false }
 fracints_macros = { version = "0.1", path = "../fracints_macros" }
-serde = { version = "1", features = ["derive"], optional = true }
 rand_core = { version = "0.6", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 rand = "0.8"

@@ -10,6 +10,8 @@ macro_rules! impl_signed {
         $normalized_mul:expr,
         $normalized_div:expr,
         $sqrt_fast:expr,
+        $n:expr,
+        $to_int:ident,
         $c:expr
     ) => {
         // TODO make inner type private, not doing this currently because we need const
@@ -188,6 +190,50 @@ macro_rules! impl_signed {
                 } else {
                     Ok(x)
                 }
+            }
+
+            fn from_f32(f: f32) -> Option<Self> {
+                if f.abs() > 1.0 {
+                    return None
+                }
+                if f == 1.0 {
+                    return Some(Self::ONE);
+                } else if f == -1.0 {
+                    return Some(Self::NEG_ONE);
+                }
+                let mut f = F32::from_f32(f);
+                let mut x: FP<inlawi_ty!($n)> = FP::new(true, InlAwi::zero(), $n - 1).unwrap();
+                FP::truncate_(&mut x, &mut f);
+                Some(Self::from_int(x.$to_int()))
+            }
+
+            fn from_f64(f: f64) -> Option<Self> {
+                if f.abs() > 1.0 {
+                    return None
+                }
+                if f == 1.0 {
+                    return Some(Self::ONE);
+                } else if f == -1.0 {
+                    return Some(Self::NEG_ONE);
+                }
+                let mut f = F64::from_f64(f);
+                let mut x: FP<inlawi_ty!($n)> = FP::new(true, InlAwi::zero(), $n - 1).unwrap();
+                FP::truncate_(&mut x, &mut f);
+                Some(Self::from_int(x.$to_int()))
+            }
+
+            fn to_f32(self) -> f32 {
+                let mut f: FP<inlawi_ty!($n)> =
+                    FP::new(true, InlAwi::from(self.as_int()), $n - 1).unwrap();
+                // the msnb is never greater than 2^0 so is never anywhere near unrepresentable
+                FP::try_to_f32(&mut f).unwrap()
+            }
+
+            fn to_f64(self) -> f64 {
+                let mut f: FP<inlawi_ty!($n)> =
+                    FP::new(true, InlAwi::from(self.as_int()), $n - 1).unwrap();
+                // the msnb is never greater than 2^0 so is never anywhere near unrepresentable
+                FP::try_to_f64(&mut f).unwrap()
             }
         }
 

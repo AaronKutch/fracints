@@ -277,6 +277,20 @@ pub trait Fracint:
     #[cfg(feature = "rand_support")]
     fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Result<Self, rand_core::Error>;
 
+    /// Converts from an `f32` to `Self`. Returns `None` if the absolute value
+    /// is greater than 1.0.
+    fn from_f32(f: f32) -> Option<Self>;
+
+    /// Converts from an `f64` to `Self`. Returns `None` if the absolute value
+    /// is greater than 1.0.
+    fn from_f64(f: f64) -> Option<Self>;
+
+    /// Converts to an `f32`
+    fn to_f32(self) -> f32;
+
+    /// Converts to an `f64`
+    fn to_f64(self) -> f64;
+
     /// Slow way of calculating the truncated square root using bisection. This
     /// will always underestimate the square root, with about as much bit error
     /// as the number of leading zero bits.

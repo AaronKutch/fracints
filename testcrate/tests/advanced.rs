@@ -37,3 +37,25 @@ fn sqrt() {
     assert_eq!(fi64!(0.0).sqrt_fast(), fi64!(0.0));
     assert_eq!(fi64!(1.0).sqrt_fast(), fi64!(1.0));
 }
+
+#[test]
+fn float_conv() {
+    assert!(fi16::from_f64(1.0000001).is_none());
+    assert!(fi16::from_f64(-1.0000001).is_none());
+    assert_eq!(fi16::from_f64(1.0).unwrap(), fi16!(1.0));
+    assert_eq!(fi16::from_f64(-1.0).unwrap(), fi16!(-1.0));
+    assert_eq!(fi16::from_f64(0.999999999999999999).unwrap(), fi16!(1.0));
+    assert_eq!(fi16::from_f64(-0.999999999999999999).unwrap(), fi16!(-1.0));
+    assert_eq!(fi16::from_f64(-0.999999999).unwrap(), fi16!(-1.0));
+
+    assert!(fi16::from_f32(1.0000001).is_none());
+    assert!(fi16::from_f32(-1.0000001).is_none());
+    assert_eq!(fi16::from_f32(1.0).unwrap(), fi16!(1.0));
+    assert_eq!(fi16::from_f32(-1.0).unwrap(), fi16!(-1.0));
+    assert_eq!(fi16::from_f32(0.999999999999999999).unwrap(), fi16!(1.0));
+    assert_eq!(fi16::from_f32(-0.999999999999999999).unwrap(), fi16!(-1.0));
+    assert_eq!(fi16::from_f32(-0.999999999).unwrap(), fi16!(-1.0));
+
+    assert_eq!(fi128!(0.123).to_f32(), 0.122999996);
+    assert_eq!(fi128!(0.123).to_f64(), 0.123);
+}

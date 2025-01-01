@@ -12,9 +12,9 @@ publish = false
 
 [dependencies]
 awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
+rand_core = { version = "0.6", optional = true }
 #awint = { version = "0.17", default-features = false, features = ["alloc"] }
 thiserror = "2.0"
-rand_core = { version = "0.6", optional = true }
 
 [dev-dependencies]
 fracints = { path = "../fracints" }

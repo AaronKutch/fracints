@@ -2,6 +2,8 @@ use fracints_internals::traits::*;
 
 use crate::fi16;
 
+// square root computation, see the testcrate for more
+
 pub fn eval_simple_isqrt_lut(lut: &[fi16], cutoff: fi16, bits: usize, x: fi16) -> fi16 {
     // the cutoff is needed because the last interval special case cannot
     // underestimate without subtracting a lot from the last LUT entry

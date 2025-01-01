@@ -9,7 +9,11 @@ use core::{
     str::FromStr,
 };
 
-use awint::awint_internals::{dd_division_u256, widening_mul_add_u128};
+use awint::{
+    awint_internals::{dd_division_u256, widening_mul_add_u128},
+    fp::{F32, F64, FP},
+    inlawi_ty, Bits, InlAwi,
+};
 use fracints_internals::{impl_signed, *};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -23,6 +27,7 @@ macro_rules! sqrt_fast {
                 return $ty::ZERO
             }
 
+            // get the shift amount
             let lz = s.as_int().leading_zeros();
             let mut shift = 0;
             if lz >= 3 {
@@ -30,6 +35,7 @@ macro_rules! sqrt_fast {
             }
             s <<= shift * 2;
 
+            // initial estimation
             let f = eval_simple_isqrt_lut(
                 &SIMPLE_ISQRT_LUT,
                 SIMPLE_ISQRT_CUTOFF,
@@ -38,8 +44,10 @@ macro_rules! sqrt_fast {
             );
             let f = ($widen)(f);
 
+            // iterative method
             let tmp = goldschmidt(s, f, $n);
 
+            // shift back half the original
             tmp >> shift
         }
     };
@@ -81,6 +89,8 @@ macro_rules! impl_signed1 {
         $to_string:ident,
         $from_str:ident,
         $sqrt_fast:ident,
+        $n:expr,
+        $to_int:ident,
         $c:expr
     );*;) => {$(
         impl_signed!(
@@ -93,16 +103,18 @@ macro_rules! impl_signed1 {
             |a: $iX, b: $iX| (($iD::from(a) * $iD::from(b)) >> ($uX::BITS - 1)) as $iX,
             |a: $iX, b: $iX| (($iD::from(a) << ($uX::BITS - 1)) / $iD::from(b)) as $iX,
             $sqrt_fast,
+            $n,
+            $to_int,
             $c
         );
     )*};
 }
 
 impl_signed1!(
-    fi8, "fi8", i8, u8, i16, i8_to_string, i8_from_str, sqrt_fast_fi8, CONST8;
-    fi16, "fi16", i16, u16, i32, i16_to_string, i16_from_str, sqrt_fast_fi16, CONST16;
-    fi32, "fi32", i32, u32, i64, i32_to_string, i32_from_str, sqrt_fast_fi32, CONST32;
-    fi64, "fi64", i64, u64, i128, i64_to_string, i64_from_str, sqrt_fast_fi64, CONST64;
+    fi8, "fi8", i8, u8, i16, i8_to_string, i8_from_str, sqrt_fast_fi8, 8, to_i8, CONST8;
+    fi16, "fi16", i16, u16, i32, i16_to_string, i16_from_str, sqrt_fast_fi16, 16, to_i16, CONST16;
+    fi32, "fi32", i32, u32, i64, i32_to_string, i32_from_str, sqrt_fast_fi32, 32, to_i32, CONST32;
+    fi64, "fi64", i64, u64, i128, i64_to_string, i64_from_str, sqrt_fast_fi64, 64, to_i64, CONST64;
 );
 // the 128 bit case needs special handling for the widening multiplies
 impl_signed!(
@@ -163,6 +175,8 @@ impl_signed!(
         quo as i128
     },
     sqrt_fast_fi128,
+    128,
+    to_i128,
     CONST128
 );
 
