@@ -13,6 +13,7 @@ pub trait Fracint:
     Sized
     + Clone
     + Copy
+    + Default
     + PartialEq
     + Eq
     + PartialOrd

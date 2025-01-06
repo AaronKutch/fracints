@@ -18,7 +18,7 @@ macro_rules! impl_signed {
         // traits
         #[allow(non_camel_case_types)]
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct $ty(pub $iX);
 
         impl Fracint for $ty {
