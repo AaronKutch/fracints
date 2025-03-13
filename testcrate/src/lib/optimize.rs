@@ -54,7 +54,7 @@ impl<O: Optimizeable> RampOptimize<O> {
         for i in 0..population {
             //let chance = inc.saturating_mul_int(i);
             chance += inc;
-            let replace = fi64::rand(&mut self.rng).unwrap().wrapping_abs() < chance;
+            let replace = fi64::rand(&mut self.rng).wrapping_abs() < chance;
             if replace {
                 // choose a random case and mutate it before replacing the one chosen to be
                 // replaced

@@ -11,9 +11,9 @@ description = "Internal utilities for the `fracints` system of crates"
 publish = false
 
 [dependencies]
-awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
-rand_core = { version = "0.6", optional = true }
-#awint = { version = "0.17", default-features = false, features = ["alloc"] }
+#awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
+awint = { version = "0.18", default-features = false, features = ["alloc"] }
+rand_core = { version = "0.9", optional = true }
 thiserror = "2.0"
 
 [dev-dependencies]

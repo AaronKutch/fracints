@@ -98,10 +98,10 @@ pub struct ISqrt<F: Fracint + FracintDouble> {
 impl<F: Fracint + FracintDouble> ISqrt<F> {
     pub fn rand(start: F, end: F, n: F::Int, rng: &mut StarRng) -> Self {
         Self {
-            offset: F::rand(rng).unwrap(),
-            a0: F::rand(rng).unwrap(),
-            a1: F::rand(rng).unwrap(),
-            a2: F::rand(rng).unwrap(),
+            offset: F::rand(rng),
+            a0: F::rand(rng),
+            a1: F::rand(rng),
+            a2: F::rand(rng),
             start,
             end,
             n,
@@ -282,7 +282,6 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
             }
             let best = actual_best.unwrap();
             res.push((best.offset, best.a0, best.a1, best.a2));
-            dbg!(res.last().unwrap(), actual_worst_error);
 
             start += step;
         }

@@ -26,6 +26,7 @@ fn sqrt() {
     assert_eq!(fi16!(0.07).sqrt_fast(), fi16!(0.26459));
     assert_eq!(fi8!(0.07).sqrt_fast(), fi8!(0.258));
 
+    // TODO we need a full `awint` style fuzz test for square roots
     assert_eq!(
         fi128::ULP.sqrt_fast(),
         fi128!(0.00000000000000000007666467083416870407)

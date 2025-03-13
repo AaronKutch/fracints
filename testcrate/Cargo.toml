@@ -11,8 +11,8 @@ path = "./src/lib/common.rs"
 [dependencies]
 fracints = { path = "../fracints", features = ["rand_support"] }
 image = "0.25"
-stacked_errors = "0.6"
-#star_rng = "0.1"
-star_rng = { path = "../../star_rng" }
+stacked_errors = "0.7"
+star_rng = "0.2"
+#star_rng = { path = "../../star_rng" }
 
 [dev-dependencies]

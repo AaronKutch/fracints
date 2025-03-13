@@ -175,20 +175,20 @@ macro_rules! impl_signed {
             /// ```
             /// use fracints::*;
             ///
-            /// let mut rng = rand::thread_rng();
-            /// println!("{}", fi128::rand(&mut rng).unwrap());
+            /// let mut rng = rand::rng();
+            /// println!("{}", fi128::rand(&mut rng));
             /// ```
             #[cfg(feature = "rand_support")]
-            fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Result<Self, rand_core::Error> {
+            fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Self {
                 // TODO this seems to be slow in some cases, use `next_u32` and `next_u64` when
                 // possible
                 let mut dst = Self::ZERO.0.to_le_bytes();
-                rng.try_fill_bytes(&mut dst)?;
+                rng.fill_bytes(&mut dst);
                 let x = Self(Self::Int::from_le_bytes(dst));
                 if x == Self::MIN {
-                    Ok(Self::ZERO)
+                    Self::ZERO
                 } else {
-                    Ok(x)
+                    x
                 }
             }
 
@@ -240,11 +240,11 @@ macro_rules! impl_signed {
         impl $ty {
             // TODO
             pub fn _todo() {
-                dbg!(
+                let _ = (
                     $c.num_4divtau,
                     $c.num_4divtau_sqr,
                     $c.cos_taylor_iters,
-                    $c.sin_taylor_iters
+                    $c.sin_taylor_iters,
                 );
             }
             /*

@@ -19,7 +19,7 @@ pub fn mutate_fracint<F: Fracint>(f: &mut F, rng: &mut StarRng, temp: &FracintTe
         .frozen_sig_add
         .clamp(0, if F::SIGNED { F::BITS - 2 } else { F::BITS - 1 });
     let mask = F::MAX >> frozen_sig_add;
-    let r = F::rand(rng).unwrap() & mask;
+    let r = F::rand(rng) & mask;
     if rng.next_bool() {
         *f -= r;
     } else {
@@ -45,11 +45,11 @@ impl<F: Fracint> Poly<F> {
     pub fn rand(n: usize, rng: &mut StarRng) -> Self {
         let mut a = vec![];
         for _ in 0..n {
-            a.push(F::rand(rng).unwrap());
+            a.push(F::rand(rng));
         }
         Self {
             a,
-            offset: F::rand(rng).unwrap(),
+            offset: F::rand(rng),
         }
     }
 

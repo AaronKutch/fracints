@@ -10,7 +10,7 @@ use core::{
 };
 
 use awint::{
-    awint_internals::{dd_division_u256, widening_mul_add_u128},
+    awint_internals::{u256_div_rem, widening_mul_add_u128},
     fp::{F32, F64, FP},
     inlawi_ty, Bits, InlAwi,
 };
@@ -160,7 +160,7 @@ impl_signed!(
 
         let lo = lhs << 127;
         let hi = lhs >> 1;
-        let (quo, _) = dd_division_u256((lo, hi), (rhs, 0));
+        let (quo, _) = u256_div_rem((lo, hi), (rhs, 0));
         let mut quo = quo.0;
 
         /*
