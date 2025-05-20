@@ -10,7 +10,6 @@ documentation = "https://docs.rs/fracints"
 description = "Special case fractional-only fixed point numbers"
 keywords = ["numerics", "math", "no_std"]
 categories = ["data-structures", "mathematics", "algorithms", "no-std"]
-publish = false
 
 [dependencies]
 #awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
