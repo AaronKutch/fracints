@@ -10,15 +10,16 @@ use core::{
 };
 
 use awint::{
+    Bits, InlAwi,
     awint_internals::{u256_div_rem, widening_mul_add_u128},
     fp::{F32, F64, FP},
-    inlawi_ty, Bits, InlAwi,
+    inlawi_ty,
 };
 use fracints_internals::{impl_signed, *};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::{constants::*, internal::*, Fracint, FracintDouble, FracintHalf};
+use crate::{Fracint, FracintDouble, FracintHalf, constants::*, internal::*};
 
 macro_rules! sqrt_fast {
     ($name:ident, $ty:ident, $n:expr, $truncate:tt, $widen:tt) => {

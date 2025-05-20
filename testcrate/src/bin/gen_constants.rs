@@ -6,7 +6,7 @@
 use std::fmt::Write;
 
 use common::sqrt::simple_isqrt_lut;
-use fracints::{fi16, Fracint};
+use fracints::{Fracint, fi16};
 
 pub fn main() {
     let mut s = r#"// The generating function is in the testcrate of the repo containing this

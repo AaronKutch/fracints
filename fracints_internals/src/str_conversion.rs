@@ -1,6 +1,6 @@
 use std::num::NonZeroUsize;
 
-use awint::{Awi, InlAwi, FP};
+use awint::{Awi, FP, InlAwi};
 use thiserror::Error;
 
 // TODO these docs could probably be at a module level and be more comprehensive
@@ -20,7 +20,7 @@ use thiserror::Error;
 /// ```
 /// use core::str::FromStr;
 ///
-/// use fracints::{fi128, fi64, fi8, Fracint};
+/// use fracints::{Fracint, fi8, fi64, fi128};
 ///
 /// assert_eq!(fi64!(1), fi64::ONE);
 /// assert_eq!(fi64!(1.000_000), fi64::ONE);

@@ -1,7 +1,7 @@
 [package]
 name = "testcrate"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 publish = false
 
 [lib]
@@ -10,9 +10,8 @@ path = "./src/lib/common.rs"
 
 [dependencies]
 fracints = { path = "../fracints", features = ["rand_support"] }
-image = "0.25"
 stacked_errors = "0.7"
-star_rng = "0.2"
 #star_rng = { path = "../../star_rng" }
+star_rng = "0.2"
 
 [dev-dependencies]

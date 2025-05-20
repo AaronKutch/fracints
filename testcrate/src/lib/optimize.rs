@@ -1,7 +1,7 @@
 use core::fmt;
 use std::fmt::Debug;
 
-use fracints::{fi64, Fracint};
+use fracints::{Fracint, fi64};
 use star_rng::StarRng;
 
 pub trait Optimizeable: Debug + Clone {

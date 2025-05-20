@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use fracints::*;
-use stacked_errors::{ensure_eq, Result};
+use stacked_errors::{Result, ensure_eq};
 
 macro_rules! basic_cases {
     ($ty:ident, $iX:ident) => {

@@ -9,7 +9,7 @@ mod impl_signed;
 #[doc(hidden)]
 pub mod internal;
 
-pub use fracints_internals::{traits::*, FracintSerdeError};
+pub use fracints_internals::{FracintSerdeError, traits::*};
 pub use fracints_macros::*;
 
 pub use crate::impl_signed::*;

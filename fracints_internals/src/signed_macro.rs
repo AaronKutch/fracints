@@ -185,11 +185,7 @@ macro_rules! impl_signed {
                 let mut dst = Self::ZERO.0.to_le_bytes();
                 rng.fill_bytes(&mut dst);
                 let x = Self(Self::Int::from_le_bytes(dst));
-                if x == Self::MIN {
-                    Self::ZERO
-                } else {
-                    x
-                }
+                if x == Self::MIN { Self::ZERO } else { x }
             }
 
             fn from_f32(f: f32) -> Option<Self> {

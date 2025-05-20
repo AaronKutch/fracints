@@ -6,7 +6,7 @@ use std::cmp::max;
 use fracints::{internal::eval_simple_isqrt_lut, prelude::*};
 use star_rng::StarRng;
 
-use crate::{mutate_fracint, FracintTemperature, Optimizeable, RampOptimize};
+use crate::{FracintTemperature, Optimizeable, RampOptimize, mutate_fracint};
 
 /*
 any kind of polynomial or rational has horrible convergence for square roots, only degree 2
