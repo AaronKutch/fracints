@@ -45,6 +45,8 @@ pub trait Fracint:
     + Sum
     + Product
 {
+    /// This is only for workarounds, to make this better we would need a
+    /// refined trait for normal integers.
     type Int: Sized
         + Clone
         + Copy

@@ -23,7 +23,7 @@ use crate::{Fracint, FracintDouble, FracintHalf, constants::*, internal::*};
 
 macro_rules! sqrt_fast {
     ($name:ident, $ty:ident, $n:expr, $truncate:tt, $widen:tt) => {
-        pub fn $name(mut s: $ty) -> $ty {
+        fn $name(mut s: $ty) -> $ty {
             if s <= $ty::ZERO {
                 return $ty::ZERO
             }
@@ -54,7 +54,7 @@ macro_rules! sqrt_fast {
     };
 }
 
-pub fn sqrt_fast_fi8(s: fi8) -> fi8 {
+fn sqrt_fast_fi8(s: fi8) -> fi8 {
     s.sqrt_slow()
 }
 

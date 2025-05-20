@@ -26,4 +26,8 @@ This crate provides a special case of fixed point numbers in the form of all fra
 ## Cons
 
 - Postive numeric 1.0 cannot be exactly represented by either fiN or fuN due to the fact that integers can only represent up to (2 ^ N) - 1. Instead, the `fiN::ONE` constant uses the true numeric 1 minus 1 ULP. Negative numeric 1 (`fiN::MIN`) can be represented exactly by fiN, but as noted elsewhere it leads to all kinds of issues unless carefully handled. I believe that the disadvantage is worth it because of the special cases it avoids (such as no multiplication overflow besides a corner case) and greater idealness it enables.
-- Simple operations are a little slower to compute than the equivalent floating point operation, and transcendentals are considerably slower to compute.
+- Simple operations are a little slower to compute than the equivalent floating point operation, and transcendentals are considerably slower to compute (roughly speaking, but depending on the hardware and how much instruction level parallelism there is the performance could go anywhere).
+
+## Other notes
+
+Initial development of all the basics is complete, but I did not get around to implementing unsigned fracints and trigonometry. There are a bunch of TODOs where I know I could improve performance of serialization and some existing algorithms. Any issues or PRs are welcome if someone finds this useful.

@@ -16,6 +16,10 @@ macro_rules! impl_signed {
     ) => {
         // TODO make inner type private, not doing this currently because we need const
         // traits
+        /// Signed Fractional Integer of the unit range.
+        ///
+        /// Note: in the future we want to make the inner type private, but not
+        /// currently because we don't have stable const traits.
         #[allow(non_camel_case_types)]
         #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
         #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -235,7 +239,8 @@ macro_rules! impl_signed {
 
         impl $ty {
             // TODO
-            pub fn _todo() {
+            #[doc(hidden)]
+            pub fn __todo() {
                 let _ = (
                     $c.num_4divtau,
                     $c.num_4divtau_sqr,

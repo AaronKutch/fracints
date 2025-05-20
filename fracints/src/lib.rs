@@ -1,5 +1,8 @@
 //! Fracints
 //!
+//! See the library documentation of [awint_core] for more information of how to
+//! deal with fixed point numbers.
+//!
 //! See the README.md for more.
 
 #![cfg_attr(not(feature = "std"), no_std)]
