@@ -32,7 +32,7 @@ jobs:
       - name: Install Rust components
         run: |
           rustup set profile minimal
-          rustup install 1.70.0
+          rustup install 1.85.0
       - name: Run `cargo build`
         run: |
           cargo build --no-default-features

@@ -1,5 +1,7 @@
 //! Fracints
 //!
+//! Note there are "rand_support" and "serde_support" features.
+//!
 //! See the library documentation of [awint_core] for more information of how to
 //! deal with fixed point numbers.
 //!
