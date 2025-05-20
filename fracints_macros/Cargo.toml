@@ -8,7 +8,6 @@ readme = "README.md"
 repository = "https://github.com/AaronKutch/fracints"
 documentation = "https://docs.rs/fracints"
 description = "proc-macros reexported by `fracints`"
-publish = false
 
 [lib]
 proc-macro = true

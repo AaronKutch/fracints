@@ -8,7 +8,6 @@ readme = "README.md"
 repository = "https://github.com/AaronKutch/fracints"
 documentation = "https://docs.rs/fracints"
 description = "Internal utilities for the `fracints` system of crates"
-publish = false
 
 [dependencies]
 #awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
