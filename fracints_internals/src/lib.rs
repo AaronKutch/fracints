@@ -8,6 +8,8 @@ mod signed_macro;
 mod signed_macro2;
 mod str_conversion;
 pub mod traits;
+mod trig_macro;
 
 pub use awint;
 pub use str_conversion::*;
+pub use trig_macro::*;

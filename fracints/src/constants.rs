@@ -1,75 +1,162 @@
 // The generating function is in the testcrate of the repo containing this
 // crate.
+use fracints_internals::TrigConsts;
+
 use crate::impl_signed::*;
 
-pub struct Const8 {
-    pub num_4divtau: fi8,
-    pub num_4divtau_sqr: fi8,
-    pub cos_taylor_iters: usize,
-    pub sin_taylor_iters: usize,
-}
-
-pub const CONST8: Const8 = Const8 {
-    num_4divtau: fi8(81),
-    num_4divtau_sqr: fi8(52),
-    cos_taylor_iters: 0,
-    sin_taylor_iters: 0,
+pub const FI8_TRIG: TrigConsts<fi8, fi16> = TrigConsts {
+    sqrt_half: fi8(91),
+    inv_pi: fi8(41),
+    cos_coeffs: &[fi16(32767), fi16(10106), fi16(520)],
+    sin_coeffs: &[fi16(25736), fi16(2646), fi16(82)],
+    cos_coeffs_fast: &[fi8(127), fi8(39), fi8(2)],
+    sin_coeffs_fast: &[fi8(101), fi8(10)],
 };
 
-pub struct Const16 {
-    pub num_4divtau: fi16,
-    pub num_4divtau_sqr: fi16,
-    pub cos_taylor_iters: usize,
-    pub sin_taylor_iters: usize,
-}
-
-pub const CONST16: Const16 = Const16 {
-    num_4divtau: fi16(81),
-    num_4divtau_sqr: fi16(52),
-    cos_taylor_iters: 0,
-    sin_taylor_iters: 0,
+pub const FI16_TRIG: TrigConsts<fi16, fi32> = TrigConsts {
+    sqrt_half: fi16(23170),
+    inv_pi: fi16(10430),
+    cos_coeffs: &[
+        fi32(2147483647),
+        fi32(662337939),
+        fi32(34046945),
+        fi32(700062),
+    ],
+    sin_coeffs: &[
+        fi32(1686629713),
+        fi32(173399667),
+        fi32(5348082),
+        fi32(78547),
+    ],
+    cos_coeffs_fast: &[fi16(32767), fi16(10101), fi16(504)],
+    sin_coeffs_fast: &[fi16(25736), fi16(2645), fi16(80)],
 };
 
-pub struct Const32 {
-    pub num_4divtau: fi32,
-    pub num_4divtau_sqr: fi32,
-    pub cos_taylor_iters: usize,
-    pub sin_taylor_iters: usize,
-}
-
-pub const CONST32: Const32 = Const32 {
-    num_4divtau: fi32(81),
-    num_4divtau_sqr: fi32(52),
-    cos_taylor_iters: 0,
-    sin_taylor_iters: 0,
+pub const FI32_TRIG: TrigConsts<fi32, fi64> = TrigConsts {
+    sqrt_half: fi32(1518500250),
+    inv_pi: fi32(683565276),
+    cos_coeffs: &[
+        fi64(9223372036854775807),
+        fi64(2844719788994575541),
+        fi64(146230515361077366),
+        fi64(3006744454127613),
+        fi64(33119841849787),
+        fi64(226999817281),
+    ],
+    sin_coeffs: &[
+        fi64(7244019458077122842),
+        fi64(744745899218905439),
+        fi64(22969835639450503),
+        fi64(337355938868184),
+        fi64(2890251440093),
+        fi64(16207749053),
+    ],
+    cos_coeffs_fast: &[
+        fi32(2147483589),
+        fi32(662336039),
+        fi32(34037429),
+        fi32(684787),
+    ],
+    sin_coeffs_fast: &[
+        fi32(1686629708),
+        fi32(173399501),
+        fi32(5347249),
+        fi32(77211),
+    ],
 };
 
-pub struct Const64 {
-    pub num_4divtau: fi64,
-    pub num_4divtau_sqr: fi64,
-    pub cos_taylor_iters: usize,
-    pub sin_taylor_iters: usize,
-}
-
-pub const CONST64: Const64 = Const64 {
-    num_4divtau: fi64(81),
-    num_4divtau_sqr: fi64(52),
-    cos_taylor_iters: 0,
-    sin_taylor_iters: 0,
+pub const FI64_TRIG: TrigConsts<fi64, fi128> = TrigConsts {
+    sqrt_half: fi64(6521908912666391106),
+    inv_pi: fi64(2935890503282001226),
+    cos_coeffs: &[
+        fi128(170141183460469231731687303715884105727),
+        fi128(52475817908999972505782598074850543282),
+        fi128(2697476892632447462304736525886010442),
+        fi128(55464645440337605747557706865614254),
+        fi128(610953246364750960627892584840009),
+        fi128(4187407534153734215659464606864),
+        fi128(19568208252006834270457412117),
+        fi128(66322278257362553798162472),
+        fi128(170462148275817327813015),
+        fi128(343626219126256846934),
+    ],
+    sin_coeffs: &[
+        fi128(133628573008120843482460046645233847913),
+        fi128(13738137002835834898907806932589814914),
+        fi128(423718679456116020458444704270379203),
+        fi128(6223118666047401603949173861017025),
+        fi128(53315728624064907494611424623963),
+        fi128(298980198792816423517315782738),
+        fi128(1182218063238843076263849110),
+        fi128(3472626369044471224087581),
+        fi128(7875332834388849369035),
+        fi128(14204389547209013294),
+    ],
+    cos_coeffs_fast: &[
+        fi64(9223371782067876864),
+        fi64(2844711627924030464),
+        fi64(146189644184912704),
+        fi64(2941139574885581),
+    ],
+    sin_coeffs_fast: &[
+        fi64(7244019435780213760),
+        fi64(744745185153716736),
+        fi64(22966260606255924),
+        fi64(331620800703365),
+    ],
 };
 
-pub struct Const128 {
-    pub num_4divtau: fi128,
-    pub num_4divtau_sqr: fi128,
-    pub cos_taylor_iters: usize,
-    pub sin_taylor_iters: usize,
-}
-
-pub const CONST128: Const128 = Const128 {
-    num_4divtau: fi128(81),
-    num_4divtau_sqr: fi128(52),
-    cos_taylor_iters: 0,
-    sin_taylor_iters: 0,
+pub const FI128_TRIG: TrigConsts<fi128, fi128> = TrigConsts {
+    sqrt_half: fi128(120307984584002255772516886238812528464),
+    inv_pi: fi128(54157620742477409023451113735280473968),
+    cos_coeffs: &[
+        fi128(170141183460469231731687303715884105727),
+        fi128(52475817908999972505782598074850543282),
+        fi128(2697476892632447462304736525886010442),
+        fi128(55464645440337605747557706865614254),
+        fi128(610953246364750960627892584840009),
+        fi128(4187407534153734215659464606864),
+        fi128(19568208252006834270457412117),
+        fi128(66322278257362553798162472),
+        fi128(170462148275817327813015),
+        fi128(343626219126256846934),
+        fi128(557805073127993572),
+        fi128(744766694357957),
+        fi128(832263659921),
+        fi128(789818565),
+        fi128(644444),
+        fi128(457),
+    ],
+    sin_coeffs: &[
+        fi128(133628573008120843482460046645233847913),
+        fi128(13738137002835834898907806932589814914),
+        fi128(423718679456116020458444704270379203),
+        fi128(6223118666047401603949173861017025),
+        fi128(53315728624064907494611424623963),
+        fi128(298980198792816423517315782738),
+        fi128(1182218063238843076263849110),
+        fi128(3472626369044471224087581),
+        fi128(7875332834388849369035),
+        fi128(14204389547209013294),
+        fi128(20861860950881214),
+        fi128(25432104082971),
+        fi128(26146333999),
+        fi128(22974891),
+        fi128(17453),
+        fi128(12),
+    ],
+    cos_coeffs_fast: &[
+        fi128(170141178760480513577620888922540212224),
+        fi128(52475667363820259988710926412964429824),
+        fi128(2696722952505746436808273203942129664),
+        fi128(54254449022973221303153030013648896),
+    ],
+    sin_coeffs_fast: &[
+        fi128(133628572596815468004946303374233436160),
+        fi128(13738123830658046943362944646435045376),
+        fi128(423652731733720600094784482583773184),
+        fi128(6117324040093616925786940786081792),
+    ],
 };
 
 pub const SIMPLE_ISQRT_LUT: [fi16; 24] = [

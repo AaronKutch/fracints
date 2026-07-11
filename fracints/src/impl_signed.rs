@@ -91,8 +91,7 @@ macro_rules! impl_signed1 {
         $from_str:ident,
         $sqrt_fast:ident,
         $n:expr,
-        $to_int:ident,
-        $c:expr
+        $to_int:ident
     );*;) => {$(
         impl_signed!(
             $ty,
@@ -105,17 +104,16 @@ macro_rules! impl_signed1 {
             |a: $iX, b: $iX| (($iD::from(a) << ($uX::BITS - 1)) / $iD::from(b)) as $iX,
             $sqrt_fast,
             $n,
-            $to_int,
-            $c
+            $to_int
         );
     )*};
 }
 
 impl_signed1!(
-    fi8, "fi8", i8, u8, i16, i8_to_string, i8_from_str, sqrt_fast_fi8, 8, to_i8, CONST8;
-    fi16, "fi16", i16, u16, i32, i16_to_string, i16_from_str, sqrt_fast_fi16, 16, to_i16, CONST16;
-    fi32, "fi32", i32, u32, i64, i32_to_string, i32_from_str, sqrt_fast_fi32, 32, to_i32, CONST32;
-    fi64, "fi64", i64, u64, i128, i64_to_string, i64_from_str, sqrt_fast_fi64, 64, to_i64, CONST64;
+    fi8, "fi8", i8, u8, i16, i8_to_string, i8_from_str, sqrt_fast_fi8, 8, to_i8;
+    fi16, "fi16", i16, u16, i32, i16_to_string, i16_from_str, sqrt_fast_fi16, 16, to_i16;
+    fi32, "fi32", i32, u32, i64, i32_to_string, i32_from_str, sqrt_fast_fi32, 32, to_i32;
+    fi64, "fi64", i64, u64, i128, i64_to_string, i64_from_str, sqrt_fast_fi64, 64, to_i64;
 );
 // the 128 bit case needs special handling for the widening multiplies
 impl_signed!(
@@ -177,11 +175,16 @@ impl_signed!(
     },
     sqrt_fast_fi128,
     128,
-    to_i128,
-    CONST128
+    to_i128
 );
 
 impl_signed_double!(fi8, fi16, i8, u8, i16, u16);
 impl_signed_double!(fi16, fi32, i16, u16, i32, u32);
 impl_signed_double!(fi32, fi64, i32, u32, i64, u64);
 impl_signed_double!(fi64, fi128, i64, u64, i128, u128);
+
+impl_cos_sin!(fi8, fi16, i8, u8, FI8_TRIG);
+impl_cos_sin!(fi16, fi32, i16, u16, FI16_TRIG);
+impl_cos_sin!(fi32, fi64, i32, u32, FI32_TRIG);
+impl_cos_sin!(fi64, fi128, i64, u64, FI64_TRIG);
+impl_cos_sin_single!(fi128, i128, u128, FI128_TRIG);
