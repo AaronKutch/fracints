@@ -4,13 +4,13 @@ on: [pull_request]
 
 env:
   RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
 
 jobs:
   test_suite:
     name: Test suite
     runs-on: ubuntu-latest
     env:
-      RUSTFLAGS: -D warnings
     steps:
       - uses: actions/checkout@v2
       - name: Install Rust components
