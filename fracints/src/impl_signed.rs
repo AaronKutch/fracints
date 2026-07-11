@@ -25,7 +25,7 @@ macro_rules! sqrt_fast {
     ($name:ident, $ty:ident, $n:expr, $truncate:tt, $widen:tt) => {
         fn $name(mut s: $ty) -> $ty {
             if s <= $ty::ZERO {
-                return $ty::ZERO
+                return $ty::ZERO;
             }
 
             // get the shift amount

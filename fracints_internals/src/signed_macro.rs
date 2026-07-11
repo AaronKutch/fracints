@@ -194,7 +194,7 @@ macro_rules! impl_signed {
 
             fn from_f32(f: f32) -> Option<Self> {
                 if f.abs() > 1.0 {
-                    return None
+                    return None;
                 }
                 if f == 1.0 {
                     return Some(Self::ONE);
@@ -209,7 +209,7 @@ macro_rules! impl_signed {
 
             fn from_f64(f: f64) -> Option<Self> {
                 if f.abs() > 1.0 {
-                    return None
+                    return None;
                 }
                 if f == 1.0 {
                     return Some(Self::ONE);

@@ -11,10 +11,19 @@ description = "Special case fractional-only fixed point numbers"
 keywords = ["numerics", "math", "no_std"]
 categories = ["data-structures", "mathematics", "algorithms", "no-std"]
 
+[package.metadata.cargo-machete]
+# `awint_core` is an important doc dependency, others are used by macro_rules
+ignored = ["awint_core", "rand_core"]
+
+[features]
+default = ["std"]
+std = []
+rand_support = ["rand_core", "fracints_internals/rand_support"]
+serde_support = ["serde"]
+
 [dependencies]
 #awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
 awint = { version = "0.18", default-features = false, features = ["alloc"] }
-# for important doc dependency
 awint_core = { version = "0.18", default-features = false }
 fracints_internals = { version = "0.1.0", path = "../fracints_internals", default-features = false }
 fracints_macros = { version = "0.1.0", path = "../fracints_macros" }
@@ -23,9 +32,3 @@ serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 rand = "0.9"
-
-[features]
-default = ["std"]
-std = []
-rand_support = ["rand_core", "fracints_internals/rand_support"]
-serde_support = ["serde"]

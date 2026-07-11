@@ -8,7 +8,7 @@ pub fn eval_simple_isqrt_lut(lut: &[fi16], cutoff: fi16, bits: usize, x: fi16) -
     // the cutoff is needed because the last interval special case cannot
     // underestimate without subtracting a lot from the last LUT entry
     if (x < fi16::ZERO) || (x >= cutoff) {
-        return fi16::ZERO
+        return fi16::ZERO;
     }
     // we will find the interval `x` lies in and interpolate between the two LUT
     // slots
@@ -45,7 +45,7 @@ pub fn goldschmidt<F: Fracint>(s: F, f: F, n: usize) -> F {
         g = r.wrapping_mul(g).wrapping_add(g);
         if i == (n - 1) {
             // don't need the last step
-            break
+            break;
         }
         h = r.wrapping_mul(h).wrapping_add(h);
     }

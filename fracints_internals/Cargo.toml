@@ -9,6 +9,9 @@ repository = "https://github.com/AaronKutch/fracints"
 documentation = "https://docs.rs/fracints"
 description = "Internal utilities for the `fracints` system of crates"
 
+[features]
+rand_support = ["rand_core"]
+
 [dependencies]
 #awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
 awint = { version = "0.18", default-features = false, features = ["alloc"] }
@@ -17,6 +20,3 @@ thiserror = "2.0"
 
 [dev-dependencies]
 fracints = { path = "../fracints" }
-
-[features]
-rand_support = ["rand_core"]

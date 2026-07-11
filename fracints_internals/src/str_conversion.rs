@@ -239,10 +239,10 @@ fn common_from_str(
         return Err(EmptyInteger);
     }
 
-    if let Some(fraction) = fraction {
-        if is_empty_or_all_underscores(fraction) {
-            return Err(EmptyFraction);
-        }
+    if let Some(fraction) = fraction
+        && is_empty_or_all_underscores(fraction)
+    {
+        return Err(EmptyFraction);
     }
     let fraction = fraction.unwrap_or(&[]);
 

@@ -64,7 +64,7 @@ impl<O: Optimizeable> RampOptimize<O> {
                 self.beam[i as usize] = (cost, replacement);
             }
         }
-        self.beam.sort_by(|(cost0, _), (cost1, _)| cost0.cmp(cost1))
+        self.beam.sort_by_key(|(cost0, _)| *cost0)
     }
 
     pub fn best(&self) -> O {
