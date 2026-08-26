@@ -278,7 +278,7 @@ pub trait Fracint:
     fn saturating_div_int(self, rhs: Self::Int) -> Self;
 
     #[cfg(feature = "rand_support")]
-    fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Self;
+    fn rand<R: rand_core::Rng + ?Sized>(rng: &mut R) -> Self;
 
     /// Converts from an `f32` to `Self`. Returns `None` if the absolute value
     /// is greater than 1.0.

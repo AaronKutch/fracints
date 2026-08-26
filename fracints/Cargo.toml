@@ -1,6 +1,6 @@
 [package]
 name = "fracints"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Aaron Kutch <aaronkutch@att.net>"]
 license = "MIT OR Apache-2.0"
@@ -13,16 +13,16 @@ categories = ["data-structures", "mathematics", "algorithms", "no-std"]
 
 [dependencies]
 #awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
-awint = { version = "0.18", default-features = false, features = ["alloc"] }
+awint = { version = "0.19", default-features = false, features = ["alloc"] }
 # for important doc dependency
-awint_core = { version = "0.18", default-features = false }
-fracints_internals = { version = "0.1.0", path = "../fracints_internals", default-features = false }
-fracints_macros = { version = "0.1.0", path = "../fracints_macros" }
-rand_core = { version = "0.9", optional = true }
+awint_core = { version = "0.19", default-features = false }
+fracints_internals = { version = "0.2.0", path = "../fracints_internals", default-features = false }
+fracints_macros = { version = "0.2.0", path = "../fracints_macros" }
+rand_core = { version = "0.10", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
-rand = "0.9"
+rand = "0.10"
 
 [features]
 default = ["std"]
