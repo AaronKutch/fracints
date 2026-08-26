@@ -183,7 +183,7 @@ macro_rules! impl_signed {
             /// println!("{}", fi128::rand(&mut rng));
             /// ```
             #[cfg(feature = "rand_support")]
-            fn rand<R: rand_core::RngCore + ?Sized>(rng: &mut R) -> Self {
+            fn rand<R: rand_core::Rng + ?Sized>(rng: &mut R) -> Self {
                 // TODO this seems to be slow in some cases, use `next_u32` and `next_u64` when
                 // possible
                 let mut dst = Self::ZERO.0.to_le_bytes();
