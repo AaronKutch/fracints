@@ -295,7 +295,7 @@ pub fn isqrt_sub1<F: Fracint + FracintDouble>(x: F) -> F {
 }
 
 pub fn simple_isqrt_lut(n: usize, cutoff: fi16) -> (Vec<fi16>, usize) {
-    assert!((n % 3) == 0);
+    assert!(n.is_multiple_of(3));
     assert!((n / 3).is_power_of_two());
     assert!(n <= 4096);
     assert!(n >= 6);

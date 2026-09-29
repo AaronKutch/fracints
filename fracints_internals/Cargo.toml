@@ -13,6 +13,9 @@ repository = "https://github.com/AaronKutch/fracints"
 documentation = "https://docs.rs/fracints"
 description = "Internal utilities for the `fracints` system of crates"
 
+[features]
+rand_support = ["rand_core"]
+
 [dependencies]
 awint = { workspace = true }
 rand_core = { workspace = true, optional = true }
@@ -20,6 +23,3 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 fracints = { path = "../fracints" }
-
-[features]
-rand_support = ["rand_core"]
