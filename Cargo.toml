@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
     "fracints",
     "fracints_internals",
@@ -7,4 +7,20 @@ members = [
     "testcrate",
 ]
 
+[workspace.dependencies]
+awint = { version = "0.19", default-features = false, features = ["alloc"] }
+# for important doc dependency
+awint_core = { version = "0.19", default-features = false }
+fracints_internals = { version = "0.2.1", path = "./fracints_internals", default-features = false }
+fracints = { version = "0.2.1", path = "./fracints", default-features = false }
+fracints_macros = { version = "0.2.1", path = "./fracints_macros" }
+rand_core = { version = "0.10" }
+serde = { version = "1", features = ["derive"] }
+rand = "0.10"
+thiserror = "2.0"
+stacked_errors = "0.8"
+star_rng = "0.3"
+
 [patch.crates-io]
+#awint = { path = "../../awint/awint", default-features = false }
+#star_rng = { path = "../../star_rng" }

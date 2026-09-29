@@ -31,3 +31,18 @@ This crate provides a special case of fixed point numbers in the form of all fra
 ## Other notes
 
 Initial development of all the basics is complete, but I did not get around to implementing unsigned fracints and trigonometry. There are a bunch of TODOs where I know I could improve performance of serialization and some existing algorithms. Any issues or PRs are welcome if someone finds this useful.
+
+#### License
+
+<sup>
+Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
+2.0</a> or <a href="LICENSE-MIT">MIT license</a> at your option.
+</sup>
+
+<br>
+
+<sub>
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+</sub>

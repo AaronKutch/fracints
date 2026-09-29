@@ -307,19 +307,19 @@ pub trait Fracint:
         let mut prev_sqr = Self::ZERO;
         loop {
             if set_bit.is_zero() {
-                break res
+                break res;
             }
             let test = res | set_bit;
             let sqr = test.saturating_mul(test);
             if sqr <= self {
                 res = test;
                 if sqr == self {
-                    break res
+                    break res;
                 }
             }
             if sqr == prev_sqr {
                 // we have reached a point where the set bit no longer contributes
-                break res
+                break res;
             }
             prev_sqr = sqr;
             set_bit >>= 1;

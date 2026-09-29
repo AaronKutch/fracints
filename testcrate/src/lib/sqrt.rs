@@ -241,7 +241,7 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
                 let mut worst_over = F::ZERO;
                 loop {
                     if x >= end {
-                        break
+                        break;
                     }
 
                     let expected_y = best.isqrt_sub1(x);
@@ -262,7 +262,7 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
                 let mut x = start;
                 loop {
                     if x >= end {
-                        break
+                        break;
                     }
 
                     let expected_y = best.isqrt_sub1(x);
@@ -313,7 +313,7 @@ pub fn simple_isqrt_lut(n: usize, cutoff: fi16) -> (Vec<fi16>, usize) {
     let mut worst_over = fi16!(0.0);
     loop {
         if x == fi16!(1.0) {
-            break
+            break;
         }
         let max_y = isqrt_sub1(x) - fi16::ULP;
         let actual_y = eval_simple_isqrt_lut(&lut, cutoff, bits, x);
@@ -338,7 +338,7 @@ pub fn simple_isqrt_lut(n: usize, cutoff: fi16) -> (Vec<fi16>, usize) {
     let mut worst_under = fi16!(0.0);
     loop {
         if x == fi16!(1.0) {
-            break
+            break;
         }
         let max_y = isqrt_sub1(x) - fi16::ULP;
         let actual_y = eval_simple_isqrt_lut(&lut, cutoff, bits, x);

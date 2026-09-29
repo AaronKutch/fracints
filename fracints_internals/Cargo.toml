@@ -1,7 +1,11 @@
 [package]
 name = "fracints_internals"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
+# `flake.nix` and `ci.yml` read this automatically, but run `nix flake update`
+# and fix any hashes. The pinned toolchain in `pinned-toolchain.toml` is
+# bumped separately.
+rust-version = "1.88"
 authors = ["Aaron Kutch <aaronkutch@att.net>"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
@@ -10,10 +14,9 @@ documentation = "https://docs.rs/fracints"
 description = "Internal utilities for the `fracints` system of crates"
 
 [dependencies]
-#awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
-awint = { version = "0.19", default-features = false, features = ["alloc"] }
-rand_core = { version = "0.10", optional = true }
-thiserror = "2.0"
+awint = { workspace = true }
+rand_core = { workspace = true, optional = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 fracints = { path = "../fracints" }

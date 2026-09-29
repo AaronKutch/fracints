@@ -60,7 +60,7 @@ impl<F: Fracint> Poly<F> {
         // a0 + ((a1 + (a2 * t)) * t)
         let len = self.a.len();
         if len == 0 {
-            return F::ZERO
+            return F::ZERO;
         }
         let mut res = self.a[len - 1];
         for i in (0..(len - 1)).rev() {
