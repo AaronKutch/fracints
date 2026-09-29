@@ -318,7 +318,8 @@ pub trait Fracint:
                 }
             }
             if sqr == prev_sqr {
-                // we have reached a point where the set bit no longer contributes
+                // we have reached a point where the set bit no longer
+                // contributes
                 break res;
             }
             prev_sqr = sqr;

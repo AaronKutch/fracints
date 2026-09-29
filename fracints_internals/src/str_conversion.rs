@@ -170,7 +170,8 @@ fn common_from_str(
         radix = 10;
     }
 
-    // integer part, can be followed by '.' for fraction, 'e' or 'p' for exponent
+    // integer part, can be followed by '.' for fraction, 'e' or 'p' for
+    // exponent
     let integer_start = i;
     let mut fraction_start = None;
     let mut exp_start = None;
@@ -268,8 +269,8 @@ fn common_from_str(
         0
     };
 
-    // note we handle the sign ourselves, the sign bit is instead room for ONE and
-    // NEG_ONE
+    // note we handle the sign ourselves, the sign bit is instead room for ONE
+    // and NEG_ONE
     Ok(Awi::from_bytes_general(
         None,
         integer,

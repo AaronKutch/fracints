@@ -13,8 +13,8 @@ pub struct FracintTemperature {
 }
 
 pub fn mutate_fracint<F: Fracint>(f: &mut F, rng: &mut StarRng, temp: &FracintTemperature) {
-    // always be able to mutate at least 1 ULP, signed modifier is because `F::MAX`
-    // for `F::SIGNED` does not have the sign bit
+    // always be able to mutate at least 1 ULP, signed modifier is because
+    // `F::MAX` for `F::SIGNED` does not have the sign bit
     let frozen_sig_add = temp
         .frozen_sig_add
         .clamp(0, if F::SIGNED { F::BITS - 2 } else { F::BITS - 1 });
@@ -64,7 +64,8 @@ impl<F: Fracint> Poly<F> {
         }
         let mut res = self.a[len - 1];
         for i in (0..(len - 1)).rev() {
-            // use wrapping ops because that's what we would be using in optimized curves
+            // use wrapping ops because that's what we would be using in
+            // optimized curves
             res = res.wrapping_mul(t).wrapping_add(self.a[i]);
         }
         res

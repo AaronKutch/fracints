@@ -109,8 +109,8 @@ impl<F: Fracint + FracintDouble> ISqrt<F> {
     }
 
     pub fn eval(&self, mut x: F) -> F {
-        // custom polynomial where we insert two left shifts in order to obtain the
-        // required slope
+        // custom polynomial where we insert two left shifts in order to obtain
+        // the required slope
         x = x.wrapping_add(self.offset);
         let mut res = self.a2.wrapping_mul(x);
         res <<= 1;
@@ -123,8 +123,8 @@ impl<F: Fracint + FracintDouble> ISqrt<F> {
     }
 
     pub fn isqrt_sub1(&self, x: F) -> F {
-        // use f = (1-sqrt(x))/sqrt(x) which happens to work for our [0.25, 1.0) target
-        // range
+        // use f = (1-sqrt(x))/sqrt(x) which happens to work for our [0.25, 1.0)
+        // target range
         let sqrt = x.widen().sqrt_simple_bisection();
         ((F::Double::ONE - sqrt) / sqrt).truncate()
     }
@@ -159,10 +159,11 @@ impl<F: Fracint + FracintDouble> Optimizeable for ISqrt<F> {
             res = max(res, self.error(x));
             x += step;
         }
-        // for the last one, make sure we get the max value (the division for `step`
-        // truncates) so that our optimizer disfavors overflow edge cases, TODO again
-        // there should be a more rigorous way of optimizing against the real truncation
-        // arithmetic results while ensuring endpoints are perfect
+        // for the last one, make sure we get the max value (the division for
+        // `step` truncates) so that our optimizer disfavors overflow
+        // edge cases, TODO again there should be a more rigorous way of
+        // optimizing against the real truncation arithmetic results
+        // while ensuring endpoints are perfect
         res = max(res, self.error(self.end));
         res
     }
@@ -201,13 +202,15 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
         // this seems to be all that is needed
         let n = 4.try_into().unwrap();
 
-        // TODO the topology of this optimization must be much rougher than I expected
-        // or I am doing something wrong, because it is the most finicky thing ever,
-        // need a more rigorous way of doing this, perhaps the plain curve fitting
-        // methods or a simple LUT would have worked but this is good enough for now.
-        // Although after seeing the performance of the current version, it looks like
-        // the naive LUT is good enough, only if we could get 16 significant bits with
-        // only two or three more multiplications would there be advantage.
+        // TODO the topology of this optimization must be much rougher than I
+        // expected or I am doing something wrong, because it is the
+        // most finicky thing ever, need a more rigorous way of doing
+        // this, perhaps the plain curve fitting methods or a simple LUT
+        // would have worked but this is good enough for now.
+        // Although after seeing the performance of the current version, it
+        // looks like the naive LUT is good enough, only if we could get
+        // 16 significant bits with only two or three more
+        // multiplications would there be advantage.
         for _ in 0..N {
             // have to add some total retries on top of all this
             let mut actual_best = None;
@@ -234,9 +237,11 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
                 }
                 let mut best = ramp.best();
 
-                // we don't have a quick perfect method of insuring not overestimating (which
-                // would result in catastrophic overflow which we definitely do not want), for
-                // now just brute force subtract as necessary which is good for 16 bits
+                // we don't have a quick perfect method of insuring not
+                // overestimating (which would result in
+                // catastrophic overflow which we definitely do not want), for
+                // now just brute force subtract as necessary which is good for
+                // 16 bits
                 let mut x = start;
                 let mut worst_over = F::ZERO;
                 loop {
@@ -246,7 +251,8 @@ impl<F: Fracint + FracintDouble, const N: usize> ISqrtInitialLUT<F, N> {
 
                     let expected_y = best.isqrt_sub1(x);
                     let diff = best.eval(x).saturating_sub(expected_y);
-                    // `>=` because the truncated parts can break ties in the wrong way
+                    // `>=` because the truncated parts can break ties in the
+                    // wrong way
                     if diff >= F::ZERO {
                         worst_over = max(worst_over, diff);
                     }

@@ -46,8 +46,8 @@ impl<O: Optimizeable> RampOptimize<O> {
     }
 
     pub fn step(&mut self, temp: &O::Temperature) {
-        // we interpolate from a 0.0 chance to be replaced for the best case to a ~1.0
-        // chance for the worst case
+        // we interpolate from a 0.0 chance to be replaced for the best case to
+        // a ~1.0 chance for the worst case
         let population: i64 = self.beam.len().try_into().unwrap();
         let inc = fi64!(1.0).saturating_div_int(population);
         let mut chance = fi64::ZERO;
@@ -56,8 +56,8 @@ impl<O: Optimizeable> RampOptimize<O> {
             chance += inc;
             let replace = fi64::rand(&mut self.rng).wrapping_abs() < chance;
             if replace {
-                // choose a random case and mutate it before replacing the one chosen to be
-                // replaced
+                // choose a random case and mutate it before replacing the one
+                // chosen to be replaced
                 let mut replacement = self.rng.index_slice(&self.beam).unwrap().1.clone();
                 replacement.mutate(&mut self.rng, temp);
                 let cost = replacement.cost();
