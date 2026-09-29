@@ -9,9 +9,8 @@ name = "common"
 path = "./src/lib/common.rs"
 
 [dependencies]
-fracints = { path = "../fracints", features = ["rand_support"] }
+fracints = { workspace = true, features = ["rand_support"] }
 stacked_errors = "0.8"
-#star_rng = { path = "../../star_rng" }
-star_rng = "0.3"
+star_rng = { workspace = true }
 
 [dev-dependencies]

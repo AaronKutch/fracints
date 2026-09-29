@@ -4,45 +4,48 @@ on: [pull_request]
 
 env:
   RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
 
 jobs:
   test_suite:
     name: Test suite
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: -D warnings
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
+      # use latest nightly
       - name: Install Rust components
         run: |
           rustup set profile minimal
           rustup default nightly
+          rustup target add riscv32i-unknown-none-elf
       - name: Run test suite
         run: |
+          cargo b --target=riscv32i-unknown-none-elf -p no_std_test
           cargo doc --all-features
           cargo test --all-features
           cargo test --release --all-features
           cargo bench --all-features
 
-  stable_build:
-    name: Build on stable
+  msrv_build:
+    name: MSRV build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Install Rust components
+      - uses: actions/checkout@v7
+      # reads the `rust-version` of fracints_internals/Cargo.toml
+      - name: Install MSRV
         run: |
           rustup set profile minimal
-          rustup install 1.85.0
-      - name: Run `cargo build`
+          rustup default "$(sed -n 's/^rust-version = "\(.*\)"/\1/p' fracints_internals/Cargo.toml)"
+      - name: Check that the crate builds on its MSRV
         run: |
-          cargo build --no-default-features
-          cargo build --all-features
+          cargo build -p fracints --all-features
 
   rustfmt:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
       # Acquire the most recent nightly with a rustfmt component
       - name: Install most recent Rustfmt
         run: |
@@ -67,3 +70,4 @@ jobs:
       - name: Run `cargo clippy`
         run: |
           cargo clippy --all --all-targets --all-features -- -D clippy::all
+          cargo clippy --all --all-targets --no-default-features -- -D clippy::all

@@ -1,4 +1,8 @@
-use std::num::NonZeroUsize;
+use alloc::{
+    format,
+    string::{String, ToString},
+};
+use core::num::NonZeroUsize;
 
 use awint::{Awi, FP, InlAwi};
 use thiserror::Error;
@@ -166,7 +170,8 @@ fn common_from_str(
         radix = 10;
     }
 
-    // integer part, can be followed by '.' for fraction, 'e' or 'p' for exponent
+    // integer part, can be followed by '.' for fraction, 'e' or 'p' for
+    // exponent
     let integer_start = i;
     let mut fraction_start = None;
     let mut exp_start = None;
@@ -239,10 +244,10 @@ fn common_from_str(
         return Err(EmptyInteger);
     }
 
-    if let Some(fraction) = fraction {
-        if is_empty_or_all_underscores(fraction) {
-            return Err(EmptyFraction);
-        }
+    if let Some(fraction) = fraction
+        && is_empty_or_all_underscores(fraction)
+    {
+        return Err(EmptyFraction);
     }
     let fraction = fraction.unwrap_or(&[]);
 
@@ -264,8 +269,8 @@ fn common_from_str(
         0
     };
 
-    // note we handle the sign ourselves, the sign bit is instead room for ONE and
-    // NEG_ONE
+    // note we handle the sign ourselves, the sign bit is instead room for ONE
+    // and NEG_ONE
     Ok(Awi::from_bytes_general(
         None,
         integer,

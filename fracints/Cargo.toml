@@ -1,6 +1,6 @@
 [package]
 name = "fracints"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 authors = ["Aaron Kutch <aaronkutch@att.net>"]
 license = "MIT OR Apache-2.0"
@@ -11,21 +11,23 @@ description = "Special case fractional-only fixed point numbers"
 keywords = ["numerics", "math", "no_std"]
 categories = ["data-structures", "mathematics", "algorithms", "no-std"]
 
-[dependencies]
-#awint = { path = "../../awint/awint", default-features = false, features = ["alloc"] }
-awint = { version = "0.19", default-features = false, features = ["alloc"] }
-# for important doc dependency
-awint_core = { version = "0.19", default-features = false }
-fracints_internals = { version = "0.2.0", path = "../fracints_internals", default-features = false }
-fracints_macros = { version = "0.2.0", path = "../fracints_macros" }
-rand_core = { version = "0.10", optional = true }
-serde = { version = "1", features = ["derive"], optional = true }
-
-[dev-dependencies]
-rand = "0.10"
+[package.metadata.cargo-machete]
+ignored = ["awint_core", "rand_core"]
 
 [features]
 default = ["std"]
-std = []
+std = ["fracints_internals/std"]
 rand_support = ["rand_core", "fracints_internals/rand_support"]
 serde_support = ["serde"]
+
+[dependencies]
+awint = { workspace = true }
+# for important doc dependency
+awint_core = { workspace = true }
+fracints_internals = { workspace = true }
+fracints_macros = { workspace = true }
+rand_core = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+rand = { workspace = true }

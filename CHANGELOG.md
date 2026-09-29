@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.1.0] - 2026-08-26
+## [0.2.1] - 2026-09-28
+### Fixes
+- Fixed that `no_std` was not working
+
+## [0.2.0] - 2026-08-26
 ### Crate
 - `awint` 0.19
 - `rand_core` 0.10

@@ -79,8 +79,8 @@ macro_rules! impl_signed {
             }
 
             fn saturating_add(self, rhs: Self) -> Self {
-                // note that $ty::MAX added to 0 does not overflow but $ty::MIN added to 0 does
-                // overflow, and $ty::MIN.wrapping_add($ty::ZERO) and
+                // note that $ty::MAX added to 0 does not overflow but $ty::MIN added to
+                // 0 does overflow, and $ty::MIN.wrapping_add($ty::ZERO) and
                 // $ty::ZERO.wrapping_add($ty::MIN) both overflow which means that
                 // `rhs <= $ty::ZERO` catches all the cases
                 self.checked_add(rhs).unwrap_or_else(|| {
@@ -184,8 +184,8 @@ macro_rules! impl_signed {
             /// ```
             #[cfg(feature = "rand_support")]
             fn rand<R: rand_core::Rng + ?Sized>(rng: &mut R) -> Self {
-                // TODO this seems to be slow in some cases, use `next_u32` and `next_u64` when
-                // possible
+                // TODO this seems to be slow in some cases, use `next_u32` and
+                // `next_u64` when possible
                 let mut dst = Self::ZERO.0.to_le_bytes();
                 rng.fill_bytes(&mut dst);
                 let x = Self(Self::Int::from_le_bytes(dst));
@@ -194,7 +194,7 @@ macro_rules! impl_signed {
 
             fn from_f32(f: f32) -> Option<Self> {
                 if f.abs() > 1.0 {
-                    return None
+                    return None;
                 }
                 if f == 1.0 {
                     return Some(Self::ONE);
@@ -209,7 +209,7 @@ macro_rules! impl_signed {
 
             fn from_f64(f: f64) -> Option<Self> {
                 if f.abs() > 1.0 {
-                    return None
+                    return None;
                 }
                 if f == 1.0 {
                     return Some(Self::ONE);
@@ -225,14 +225,16 @@ macro_rules! impl_signed {
             fn to_f32(self) -> f32 {
                 let mut f: FP<inlawi_ty!($n)> =
                     FP::new(true, InlAwi::from(self.as_int()), $n - 1).unwrap();
-                // the msnb is never greater than 2^0 so is never anywhere near unrepresentable
+                // the msnb is never greater than 2^0 so is never anywhere near
+                // unrepresentable
                 FP::try_to_f32(&mut f).unwrap()
             }
 
             fn to_f64(self) -> f64 {
                 let mut f: FP<inlawi_ty!($n)> =
                     FP::new(true, InlAwi::from(self.as_int()), $n - 1).unwrap();
-                // the msnb is never greater than 2^0 so is never anywhere near unrepresentable
+                // the msnb is never greater than 2^0 so is never anywhere near
+                // unrepresentable
                 FP::try_to_f64(&mut f).unwrap()
             }
         }
