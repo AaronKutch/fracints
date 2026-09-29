@@ -1,0 +1,9 @@
+[package]
+name = "no_std_test"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+fracints = { workspace = true, features = ["rand_support"] }
+rand_core = { workspace = true }

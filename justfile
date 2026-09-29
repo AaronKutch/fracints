@@ -33,7 +33,7 @@ test_all:
   {{cargo}} sort -cw
   {{cargo}} doc --no-deps --all-features
   {{cargo}} nextest run --no-default-features
-  {{cargo}} nextest run --no-default-features --features=alloc
+  {{cargo}} nextest run --no-default-features --features=std
   {{cargo}} nextest run --no-default-features --features=serde_support
   {{cargo}} nextest run --all-features
   {{cargo}} t --doc --all-features
@@ -45,7 +45,7 @@ miri *ARGS:
   MIRIFLAGS="-Zmiri-tree-borrows -Zmiri-strict-provenance" {{cargo}} miri test --all-features {{ARGS}}
 
 bench *ARGS:
-  {{cargo}} bench -p testcrate --features=alloc {{ARGS}}
+  {{cargo}} bench -p testcrate {{ARGS}}
 
 run *ARGS:
   {{cargo}} r --bin {{ARGS}}

@@ -14,6 +14,8 @@ documentation = "https://docs.rs/fracints"
 description = "Internal utilities for the `fracints` system of crates"
 
 [features]
+default = ["std"]
+std = []
 rand_support = ["rand_core"]
 
 [dependencies]

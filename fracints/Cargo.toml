@@ -11,9 +11,12 @@ description = "Special case fractional-only fixed point numbers"
 keywords = ["numerics", "math", "no_std"]
 categories = ["data-structures", "mathematics", "algorithms", "no-std"]
 
+[package.metadata.cargo-machete]
+ignored = ["awint_core", "rand_core"]
+
 [features]
 default = ["std"]
-std = []
+std = ["fracints_internals/std"]
 rand_support = ["rand_core", "fracints_internals/rand_support"]
 serde_support = ["serde"]
 

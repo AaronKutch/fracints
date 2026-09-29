@@ -1,6 +1,12 @@
 [workspace]
 resolver = "3"
-members = ["fracints", "fracints_internals", "fracints_macros", "testcrate"]
+members = [
+    "fracints",
+    "fracints_internals",
+    "fracints_macros",
+    "no_std_test",
+    "testcrate",
+]
 
 [workspace.dependencies]
 awint = { version = "0.19", default-features = false, features = ["alloc"] }
@@ -14,7 +20,7 @@ rand_core = { version = "0.10" }
 serde = { version = "1", features = ["derive"] }
 stacked_errors = "0.8"
 star_rng = "0.3"
-thiserror = "2.0"
+thiserror = { version = "2.0", default-features = false }
 
 [patch.crates-io]
 #awint = { path = "../../awint/awint", default-features = false }

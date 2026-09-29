@@ -1,4 +1,8 @@
-use std::num::NonZeroUsize;
+use alloc::{
+    format,
+    string::{String, ToString},
+};
+use core::num::NonZeroUsize;
 
 use awint::{Awi, FP, InlAwi};
 use thiserror::Error;
